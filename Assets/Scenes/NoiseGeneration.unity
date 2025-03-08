@@ -428,10 +428,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Side: 512
-  TerrainOctaves: 6
-  TerrainFrequency: 1.25
-  DeepWater: 0.2
-  ShallowWater: 0.4
+  TerrainOctaves: 4
+  TerrainFrequency: 1
+  DeepWater: 0.1
+  ShallowWater: 0.2
   Sand: 0.5
   Grass: 0.7
   Forest: 0.8

@@ -34,17 +34,29 @@ public class Generator : MonoBehaviour {
 
 	void Start()
 	{
+		GenerateMap();
+	}
+
+	private void Update()
+	{
+		if (Input.GetKeyDown(KeyCode.Space))
+            GenerateMap();
+    }
+
+    private void GenerateMap()
+	{
         Initialize();
 
-		for (int i = 0; i < transform.childCount; i++)
-		{
-			HeightMapRenderer.Add(transform.GetChild(i).GetComponent<MeshRenderer>());
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            HeightMapRenderer.Add(transform.GetChild(i).GetComponent<MeshRenderer>());
 
             GetData(HeightMap, ref HeightData, Side * i, 0);
             LoadTiles(Side * i, 0);
             HeightMapRenderer[i].materials[0].mainTexture = TextureGenerator.GetTexture(Side, Side, Tiles[i]);
         }
-	}
+        Debug.Log("Generated");
+    }
 
 	private void Initialize()
 	{
