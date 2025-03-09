@@ -3,13 +3,10 @@
 public static class TextureGenerator {		
 
 	// Height Map Colors
-	private static Color DeepColor = new Color(0, 0, 0.5f, 1);
-	private static Color ShallowColor = new Color(25/255f, 25/255f, 150/255f, 1);
-	private static Color SandColor = new Color(240 / 255f, 240 / 255f, 64 / 255f, 1);
-	private static Color GrassColor = new Color(50 / 255f, 220 / 255f, 20 / 255f, 1);
-	private static Color ForestColor = new Color(16 / 255f, 160 / 255f, 0, 1);
-	private static Color RockColor = new Color(0.5f, 0.5f, 0.5f, 1);            
-	private static Color SnowColor = new Color(1, 1, 1, 1);
+	private static Color DirtColor = new Color(235/225f, 178/225f, 45/225f, 1);
+	private static Color DryGrassColor = new Color(1, 242/255f, 184/255f, 1);
+	private static Color LightGrass = new Color(95/255f, 161/255f, 63/255f, 1);
+	private static Color DarkGrassColor = new Color(34/255f, 115/255f, 20/ 255f, 1);
 
 	public static Texture2D GetTexture(int width, int height, Tile[,] tiles)
 	{
@@ -22,26 +19,17 @@ public static class TextureGenerator {
 			{
 				switch (tiles[x,y].HeightType)
 				{
-				case HeightType.DeepWater:
-					pixels[x + y * width] = DeepColor;
+				case HeightType.Dirt:
+					pixels[x + y * width] = DirtColor;
 					break;
-				case HeightType.ShallowWater:
-					pixels[x + y * width] = ShallowColor;
+				case HeightType.DryGrass:
+					pixels[x + y * width] = DryGrassColor;
 					break;
-				case HeightType.Sand:
-					pixels[x + y * width] = SandColor;
+				case HeightType.LightGrass:
+					pixels[x + y * width] = LightGrass;
 					break;
-				case HeightType.Grass:
-					pixels[x + y * width] = GrassColor;
-					break;
-				case HeightType.Forest:
-					pixels[x + y * width] = ForestColor;
-					break;
-				case HeightType.Rock:
-					pixels[x + y * width] = RockColor;
-					break;
-				case HeightType.Snow:
-					pixels[x + y * width] = SnowColor;
+				case HeightType.DarkGrass:
+					pixels[x + y * width] = DarkGrassColor;
 					break;
 				}
 			}

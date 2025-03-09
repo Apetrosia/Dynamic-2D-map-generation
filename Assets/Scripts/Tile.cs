@@ -4,14 +4,10 @@ using System.Collections.Generic;
 
 public enum HeightType
 {
-	DeepWater = 1,
-	ShallowWater = 2,
-	Shore = 3,
-	Sand = 4,
-	Grass = 5,
-	Forest = 6,
-	Rock = 7,
-	Snow = 8
+    Dirt = 1,
+    DryGrass = 2,
+    LightGrass = 3,
+    DarkGrass = 4,
 }
 
 public class Tile

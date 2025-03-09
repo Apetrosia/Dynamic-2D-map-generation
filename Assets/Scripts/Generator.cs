@@ -12,20 +12,10 @@ public class Generator : MonoBehaviour {
 	[SerializeField]
 	double TerrainFrequency = 1.25;
 	[SerializeField]
-	float DeepWater = 0.2f;
-	[SerializeField]
-	float ShallowWater = 0.4f;	
-	[SerializeField]
-	float Sand = 0.5f;
-	[SerializeField]
-	float Grass = 0.7f;
-	[SerializeField]
-	float Forest = 0.8f;
-	[SerializeField]
-	float Rock = 0.9f;
+	float[] borders;
 
-	// private variables
-	ImplicitFractal HeightMap;
+    // private variables
+    ImplicitFractal HeightMap;
 	MapData HeightData;
 	List<Tile[,]> Tiles;
 
@@ -115,27 +105,14 @@ public class Generator : MonoBehaviour {
 				t.HeightValue = value;
 				
 				//HeightMap Analyze
-				if (value < DeepWater)  {
-					t.HeightType = HeightType.DeepWater;
-				}
-				else if (value < ShallowWater)  {
-					t.HeightType = HeightType.ShallowWater;
-				}
-				else if (value < Sand) {
-					t.HeightType = HeightType.Sand;
-				}
-				else if (value < Grass) {
-					t.HeightType = HeightType.Grass;
-				}
-				else if (value < Forest) {
-					t.HeightType = HeightType.Forest;
-				}
-				else if (value < Rock) {
-					t.HeightType = HeightType.Rock;
-				}
-				else  {
-					t.HeightType = HeightType.Snow;
-				}
+				if (value < borders[0])
+					t.HeightType = HeightType.Dirt;
+				else if (value < borders[1])
+					t.HeightType = HeightType.DryGrass;
+				else if (value < borders[2])
+					t.HeightType = HeightType.LightGrass;
+				else
+					t.HeightType = HeightType.DarkGrass;
 				
 				Tiles[index][x - offsetX,y - offsetY] = t;
 			}
