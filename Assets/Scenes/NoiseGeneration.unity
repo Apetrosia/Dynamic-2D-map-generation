@@ -523,12 +523,10 @@ MonoBehaviour:
   Side: 512
   TerrainOctaves: 4
   TerrainFrequency: 1
-  DeepWater: 0.1
-  ShallowWater: 0.2
-  Sand: 0.5
-  Grass: 0.7
-  Forest: 0.8
-  Rock: 0.9
+  borders:
+  - 0.15
+  - 0.4
+  - 0.6
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
