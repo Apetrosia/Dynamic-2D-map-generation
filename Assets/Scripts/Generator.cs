@@ -2,6 +2,8 @@
 using AccidentalNoise;
 using System.Collections.Generic;
 using System.Collections;
+using System.Threading.Tasks;
+using Unity.Collections.LowLevel.Unsafe;
 
 public class Generator : MonoBehaviour {
 
@@ -26,16 +28,43 @@ public class Generator : MonoBehaviour {
 
 	// Our texture output gameobject
 	Dictionary<(int, int), MeshRenderer> HeightMapRenderer;
+	bool canGenerate = true;
 
 	void Start()
 	{
-		GenerateMap();
+        HeightMapRenderer = new Dictionary<(int, int), MeshRenderer>();
+        SetChunks();
+		GenerateMap(Random.Range(0, int.MaxValue));
 	}
 
 	private void Update()
 	{
-		if (Input.GetKeyDown(KeyCode.Space))
-			GenerateMap();
+		if (Input.GetKeyDown(KeyCode.Space) && canGenerate)
+			RegenerateMap();
+    }
+
+    private async void RegenerateMap()
+    {
+		canGenerate = false;
+
+        // Генерация сидов в основном потоке (иначе Unity выдаст ошибку)
+        int seed = Random.Range(0, int.MaxValue);
+
+        // Запускаем генерацию карты в фоновом потоке
+        await Task.Run(() => GenerateMap(seed, true));
+
+        // После завершения фоновой задачи обновляем объекты в основном потоке
+        ApplyMap();
+
+		canGenerate = true;
+    }
+
+    private void ApplyMap()
+    {
+		foreach ((int, int) coords in chunks.Keys)
+			if (HeightMapRenderer.ContainsKey(coords))
+				HeightMapRenderer[coords].materials[0].mainTexture =
+					TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
     }
 
     private void SetChunks()
@@ -48,39 +77,37 @@ public class Generator : MonoBehaviour {
 			int y = transform.GetChild(i).GetComponent<Chunk>().offsetY;
 
 			chunks[(x, y)] = transform.GetChild(i).GetComponent<Chunk>();
-		}
+            HeightMapRenderer[(x, y)] = transform.GetChild(i).GetComponent<MeshRenderer>();
+        }
     }
 
-	private void GenerateMap()
+	private void GenerateMap(int seed, bool parallel = false)
 	{
-        SetChunks();
-        Initialize();
+        Initialize(seed);
         foreach ((int, int) coords in chunks.Keys)
-            GenerateNewChunk(coords);
+            GenerateNewChunk(coords, parallel);
         Debug.Log("Map has generated");
     }
 
-    private void GenerateNewChunk((int, int) coords)
+    private void GenerateNewChunk((int, int) coords, bool parallel = false)
 	{
-		HeightMapRenderer[coords] = chunks[coords].gameObject.GetComponent<MeshRenderer>();
-
 		GetData(HeightMap, ref HeightData, Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
 		LoadTiles(Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
-		HeightMapRenderer[coords].materials[0].mainTexture = TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
+		if (!parallel)
+			HeightMapRenderer[coords].materials[0].mainTexture = TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
 
 		chunkCount++;
     }
 
-	private void Initialize()
+	private void Initialize(int seed)
 	{
 		// Initialize the HeightMap Generator
 		HeightMap = new ImplicitFractal (FractalType.MULTI, 
 		                               BasisType.SIMPLEX, 
 		                               InterpolationType.QUINTIC, 
 		                               TerrainOctaves, 
-		                               TerrainFrequency, 
-		                               Random.Range (0, int.MaxValue));
-        HeightMapRenderer = new Dictionary<(int, int), MeshRenderer>();
+		                               TerrainFrequency,
+                                       seed);
         HeightData = new MapData ();
 		Tiles = new Dictionary<(int, int), Tile[,]> ();
     }
