@@ -1,12 +1,14 @@
-﻿public class MapData {
+﻿using System.Collections.Generic;
 
-	public float[,] Data;
+public class MapData {
+
+	public Dictionary<(float, float), float> Data;
 	public float Min { get; set; }
 	public float Max { get; set; }
 
-	public MapData(int width, int height)
+	public MapData()
 	{
-		Data = new float[width, height];
+		Data = new Dictionary<(float, float), float>();
 		Min = float.MaxValue;
 		Max = float.MinValue;
 	}

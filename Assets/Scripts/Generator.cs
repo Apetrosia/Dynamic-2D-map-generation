@@ -1,8 +1,12 @@
 ﻿using UnityEngine;
 using AccidentalNoise;
 using System.Collections.Generic;
+using System.Collections;
 
 public class Generator : MonoBehaviour {
+
+	// Debug information
+	int chunkCount = 0;
 
 	// Adjustable variables for Unity Inspector
 	[SerializeField]
@@ -13,14 +17,15 @@ public class Generator : MonoBehaviour {
 	double TerrainFrequency = 1.25;
 	[SerializeField]
 	float[] borders;
+	Dictionary<(int, int), Chunk> chunks;
 
     // private variables
     ImplicitFractal HeightMap;
 	MapData HeightData;
-	List<Tile[,]> Tiles;
+	Dictionary<(int, int), Tile[,]> Tiles;
 
 	// Our texture output gameobject
-	List<MeshRenderer> HeightMapRenderer;
+	Dictionary<(int, int), MeshRenderer> HeightMapRenderer;
 
 	void Start()
 	{
@@ -30,22 +35,40 @@ public class Generator : MonoBehaviour {
 	private void Update()
 	{
 		if (Input.GetKeyDown(KeyCode.Space))
-            GenerateMap();
+			GenerateMap();
     }
 
-    private void GenerateMap()
+    private void SetChunks()
 	{
+		chunks = new Dictionary<(int, int), Chunk> ();
+
+		for (int i = 0; i < transform.childCount; i++)
+		{
+			int x = transform.GetChild(i).GetComponent<Chunk>().offsetX;
+			int y = transform.GetChild(i).GetComponent<Chunk>().offsetY;
+
+			chunks[(x, y)] = transform.GetChild(i).GetComponent<Chunk>();
+		}
+    }
+
+	private void GenerateMap()
+	{
+        SetChunks();
         Initialize();
+        foreach ((int, int) coords in chunks.Keys)
+            GenerateNewChunk(coords);
+        Debug.Log("Map has generated");
+    }
 
-        for (int i = 0; i < transform.childCount; i++)
-        {
-            HeightMapRenderer.Add(transform.GetChild(i).GetComponent<MeshRenderer>());
+    private void GenerateNewChunk((int, int) coords)
+	{
+		HeightMapRenderer[coords] = chunks[coords].gameObject.GetComponent<MeshRenderer>();
 
-            GetData(HeightMap, ref HeightData, Side * i, 0);
-            LoadTiles(Side * i, 0);
-            HeightMapRenderer[i].materials[0].mainTexture = TextureGenerator.GetTexture(Side, Side, Tiles[i]);
-        }
-        Debug.Log("Generated");
+		GetData(HeightMap, ref HeightData, Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
+		LoadTiles(Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
+		HeightMapRenderer[coords].materials[0].mainTexture = TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
+
+		chunkCount++;
     }
 
 	private void Initialize()
@@ -57,10 +80,10 @@ public class Generator : MonoBehaviour {
 		                               TerrainOctaves, 
 		                               TerrainFrequency, 
 		                               Random.Range (0, int.MaxValue));
-        HeightMapRenderer = new List<MeshRenderer>();
-        HeightData = new MapData (Side * 2, Side);
-		Tiles = new List<Tile[,]> ();
-	}
+        HeightMapRenderer = new Dictionary<(int, int), MeshRenderer>();
+        HeightData = new MapData ();
+		Tiles = new Dictionary<(int, int), Tile[,]> ();
+    }
 	
 	// Extract data from a noise module
 	private void GetData(ImplicitModuleBase module, ref MapData mapData, int offsetX = 0, int offsetY = 0)
@@ -80,7 +103,7 @@ public class Generator : MonoBehaviour {
 				if (value > mapData.Max) mapData.Max = value;
 				if (value < mapData.Min) mapData.Min = value;
 
-				mapData.Data[x,y] = value;
+				mapData.Data[(x,y)] = value;
 			}
 		}	
 	}
@@ -88,8 +111,7 @@ public class Generator : MonoBehaviour {
 	// Build a Tile array from our data
 	private void LoadTiles(int offsetX = 0, int offsetY = 0)
 	{
-		Tiles.Add(new Tile[Side, Side]);
-		int index = Tiles.Count - 1;
+		Tiles[(offsetX / Side, offsetY / Side)] = new Tile[Side, Side];
 		
 		for (var x = offsetX; x < Side + offsetX; x++)
 		{
@@ -99,7 +121,7 @@ public class Generator : MonoBehaviour {
 				t.X = x;
 				t.Y = y;
 				
-				float value = HeightData.Data[x, y];
+				float value = HeightData.Data[(x, y)];
 				value = (value - HeightData.Min) / (HeightData.Max - HeightData.Min);
 				
 				t.HeightValue = value;
@@ -114,7 +136,7 @@ public class Generator : MonoBehaviour {
 				else
 					t.HeightType = HeightType.DarkGrass;
 				
-				Tiles[index][x - offsetX,y - offsetY] = t;
+				Tiles[(offsetX / Side, offsetY / Side)][x - offsetX,y - offsetY] = t;
 			}
 		}
 	}
