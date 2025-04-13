@@ -4,12 +4,11 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Threading.Tasks;
 using Unity.Collections.LowLevel.Unsafe;
+using System.Linq;
+using Unity.VisualScripting;
 
-public class Generator : MonoBehaviour {
-
-	// Debug information
-	int chunkCount = 0;
-
+public class Generator : MonoBehaviour
+{
 	// Adjustable variables for Unity Inspector
 	[SerializeField]
 	int Side = 512;
@@ -20,18 +19,29 @@ public class Generator : MonoBehaviour {
 	[SerializeField]
 	float[] borders;
 	Dictionary<(int, int), Chunk> chunks;
+	[SerializeField]
+	GameObject chunkPrefab;
 
     // private variables
     ImplicitFractal HeightMap;
 	MapData HeightData;
-	Dictionary<(int, int), Tile[,]> Tiles;
+	Dictionary<(int, int), MyTile[,]> Tiles;
 
 	// Our texture output gameobject
 	Dictionary<(int, int), MeshRenderer> HeightMapRenderer;
 	bool canGenerate = true;
 
+	// For player monitoring
+	const float chunkSize = 15f;
+	float newChuckBorder = 2f;
+	(int, int) currentChunk = (0, 0);
+	int currentOffsetX = 0;
+    int currentOffsetY = 0;
+    Transform playerPosition;
+
 	void Start()
 	{
+		playerPosition = GameObject.FindWithTag("Player").transform;
         HeightMapRenderer = new Dictionary<(int, int), MeshRenderer>();
         SetChunks();
 		GenerateMap(Random.Range(0, int.MaxValue));
@@ -39,8 +49,49 @@ public class Generator : MonoBehaviour {
 
 	private void Update()
 	{
+        currentChunk = ((int)(playerPosition.position.x + 7.5f) / 15 - (playerPosition.position.x < -7.5f ? 1 : 0),
+            (int)(playerPosition.position.y + 7.5f) / 15 - (playerPosition.position.y < -7.5f ? 1 : 0));
+
+        CheckPlayerPosition();
 		if (Input.GetKeyDown(KeyCode.Space) && canGenerate)
 			RegenerateMap();
+    }
+
+	private async void CheckPlayerPosition()
+	{
+		/*
+        List<Task> chunkTasks = new List<Task>();
+
+		for (int i = -1; i <= 1; i++)
+			for (int j = -1; j <= 1; j++)
+				if (i != j || i != 0)
+					chunkTasks.Add(ChechChunk((currentChunk.Item1 + i, currentChunk.Item2 + j)));
+
+        ChechChunk(currentChunk);
+
+		for (int i = -1; i <= 1; i++)
+			for (int j = -1; j <= 1; j++)
+				if (i != j || i != 0)
+					HeightMapRenderer[(currentChunk.Item1 + i, currentChunk.Item2 + j)].materials[0].mainTexture =
+						TextureGenerator.GetTexture(Side, Side, Tiles[(currentChunk.Item1 + i, currentChunk.Item2 + j)]);
+		*/
+    }
+
+	private void ChechChunk((int, int) coords)
+	{
+		if (chunks.Keys.Contains(coords))
+			return;
+
+		GameObject chunkObj = Instantiate(chunkPrefab, new Vector3(coords.Item1 * chunkSize, coords.Item2 * chunkSize, 0), Quaternion.identity);
+		chunkObj.transform.SetParent(transform);
+
+		chunks[coords] = chunkObj.GetComponent<Chunk>();
+		chunks[coords].offsetX = coords.Item1;
+		chunks[coords].offsetY = coords.Item2;
+
+		HeightMapRenderer[coords] = chunkObj.GetComponent<MeshRenderer>();
+        HeightMapRenderer[coords].material.SetFloat("_Glossiness", 0);
+        AddNewChunk(coords);
     }
 
     private async void RegenerateMap()
@@ -95,11 +146,18 @@ public class Generator : MonoBehaviour {
 		LoadTiles(Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
 		if (!parallel)
 			HeightMapRenderer[coords].materials[0].mainTexture = TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
-
-		chunkCount++;
     }
 
-	private void Initialize(int seed)
+    private void AddNewChunk((int, int) coords)
+	{
+		//await Task.Run(() => GenerateNewChunk(coords, true));
+		GenerateNewChunk(coords, true);
+
+        //HeightMapRenderer[coords].materials[0].mainTexture = TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
+    }
+
+
+    private void Initialize(int seed)
 	{
 		// Initialize the HeightMap Generator
 		HeightMap = new ImplicitFractal (FractalType.MULTI, 
@@ -109,7 +167,7 @@ public class Generator : MonoBehaviour {
 		                               TerrainFrequency,
                                        seed);
         HeightData = new MapData ();
-		Tiles = new Dictionary<(int, int), Tile[,]> ();
+		Tiles = new Dictionary<(int, int), MyTile[,]> ();
     }
 	
 	// Extract data from a noise module
@@ -138,13 +196,13 @@ public class Generator : MonoBehaviour {
 	// Build a Tile array from our data
 	private void LoadTiles(int offsetX = 0, int offsetY = 0)
 	{
-		Tiles[(offsetX / Side, offsetY / Side)] = new Tile[Side, Side];
+		Tiles[(offsetX / Side, offsetY / Side)] = new MyTile[Side, Side];
 		
 		for (var x = offsetX; x < Side + offsetX; x++)
 		{
 			for (var y = offsetY; y < Side + offsetY; y++)
 			{
-				Tile t = new Tile();
+                MyTile t = new MyTile();
 				t.X = x;
 				t.Y = y;
 				
@@ -167,6 +225,4 @@ public class Generator : MonoBehaviour {
 			}
 		}
 	}
-
-
 }

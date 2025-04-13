@@ -50,3 +50,12 @@ TagManager:
   - name: Layer 3
     uniqueID: 4189426099
     locked: 0
+  - name: MG_Ground
+    uniqueID: 41313
+    locked: 0
+  - name: MG_Water
+    uniqueID: 20337
+    locked: 0
+  - name: MG_Objects
+    uniqueID: 8450
+    locked: 0

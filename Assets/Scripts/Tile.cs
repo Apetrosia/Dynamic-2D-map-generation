@@ -10,13 +10,13 @@ public enum HeightType
     DarkGrass = 4,
 }
 
-public class Tile
+public class MyTile
 {
 	public HeightType HeightType;
 	public float HeightValue { get; set; }
 	public int X, Y;
 		
-	public Tile()
+	public MyTile()
 	{
 	}
 }

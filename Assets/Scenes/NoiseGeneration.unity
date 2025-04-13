@@ -319,21 +319,6 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1408958195312400994, guid: 8cc3a498422194e4f816dd566c88109e,
         type: 3}
-      propertyPath: m_LocalScale.x
-      value: 15
-      objectReference: {fileID: 0}
-    - target: {fileID: 1408958195312400994, guid: 8cc3a498422194e4f816dd566c88109e,
-        type: 3}
-      propertyPath: m_LocalScale.y
-      value: 15
-      objectReference: {fileID: 0}
-    - target: {fileID: 1408958195312400994, guid: 8cc3a498422194e4f816dd566c88109e,
-        type: 3}
-      propertyPath: m_LocalScale.z
-      value: 1.875
-      objectReference: {fileID: 0}
-    - target: {fileID: 1408958195312400994, guid: 8cc3a498422194e4f816dd566c88109e,
-        type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -416,21 +401,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1331803335}
     m_Modifications:
-    - target: {fileID: 1408958195312400994, guid: 8cc3a498422194e4f816dd566c88109e,
-        type: 3}
-      propertyPath: m_LocalScale.x
-      value: 15
-      objectReference: {fileID: 0}
-    - target: {fileID: 1408958195312400994, guid: 8cc3a498422194e4f816dd566c88109e,
-        type: 3}
-      propertyPath: m_LocalScale.y
-      value: 15
-      objectReference: {fileID: 0}
-    - target: {fileID: 1408958195312400994, guid: 8cc3a498422194e4f816dd566c88109e,
-        type: 3}
-      propertyPath: m_LocalScale.z
-      value: 1.875
-      objectReference: {fileID: 0}
     - target: {fileID: 1408958195312400994, guid: 8cc3a498422194e4f816dd566c88109e,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -554,13 +524,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec34ea59156371c4a80171d2fd456547, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Side: 512
+  Side: 256
   TerrainOctaves: 4
   TerrainFrequency: 1
   borders:
   - 0.15
   - 0.4
   - 0.6
+  chunkPrefab: {fileID: 5198791829087745450, guid: 8cc3a498422194e4f816dd566c88109e,
+    type: 3}
 --- !u!1001 &7558827392225882272
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -569,21 +541,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1331803335}
     m_Modifications:
-    - target: {fileID: 1408958195312400994, guid: 8cc3a498422194e4f816dd566c88109e,
-        type: 3}
-      propertyPath: m_LocalScale.x
-      value: 15
-      objectReference: {fileID: 0}
-    - target: {fileID: 1408958195312400994, guid: 8cc3a498422194e4f816dd566c88109e,
-        type: 3}
-      propertyPath: m_LocalScale.y
-      value: 15
-      objectReference: {fileID: 0}
-    - target: {fileID: 1408958195312400994, guid: 8cc3a498422194e4f816dd566c88109e,
-        type: 3}
-      propertyPath: m_LocalScale.z
-      value: 1.875
-      objectReference: {fileID: 0}
     - target: {fileID: 1408958195312400994, guid: 8cc3a498422194e4f816dd566c88109e,
         type: 3}
       propertyPath: m_LocalPosition.x

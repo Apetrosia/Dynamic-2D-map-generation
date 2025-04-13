@@ -3,12 +3,13 @@
 public static class TextureGenerator {		
 
 	// Height Map Colors
-	private static Color DirtColor = new Color(235/225f, 178/225f, 45/225f, 1);
-	private static Color DryGrassColor = new Color(1, 242/255f, 184/255f, 1);
-	private static Color LightGrass = new Color(95/255f, 161/255f, 63/255f, 1);
-	private static Color DarkGrassColor = new Color(34/255f, 115/255f, 20/ 255f, 1);
+	private static Color DirtColor = new Color(64 / 225f, 39 / 225f, 4 / 225f, 1); //new Color(235/225f, 178/225f, 45/225f, 1);
+    private static Color DryGrassColor = new Color(10 / 225f, 69 / 225f, 30 / 225f, 1); //new Color(1, 242/255f, 184/255f, 1);
+    private static Color LightGrass = new Color(34 / 255f, 115 / 255f, 20 / 255f, 1); //new Color(95/255f, 161/255f, 63/255f, 1);
+    private static Color DarkGrassColor = new Color(95 / 255f, 161 / 255f, 63 / 255f, 1); //new Color(34/255f, 115/255f, 20/ 255f, 1);
 
-	public static Texture2D GetTexture(int width, int height, Tile[,] tiles)
+
+    public static Texture2D GetTexture(int width, int height, MyTile[,] tiles)
 	{
 		var texture = new Texture2D(width, height);
 		var pixels = new Color[width * height];
