@@ -18,6 +18,7 @@ public class Generator : MonoBehaviour
 	double TerrainFrequency = 1.25;
 	[SerializeField]
 	float[] borders;
+	int seed;
 	Dictionary<(int, int), Chunk> chunks;
 	[SerializeField]
 	GameObject chunkPrefab;
@@ -33,10 +34,10 @@ public class Generator : MonoBehaviour
 
 	// For player monitoring
 	const float chunkSize = 15f;
-	float newChuckBorder = 2f;
+	//float newChuckBorder = 2f;
 	(int, int) currentChunk = (0, 0);
-	int currentOffsetX = 0;
-    int currentOffsetY = 0;
+	//int currentOffsetX = 0;
+    //int currentOffsetY = 0;
     Transform playerPosition;
 
 	void Start()
@@ -59,28 +60,31 @@ public class Generator : MonoBehaviour
 
 	private async void CheckPlayerPosition()
 	{
-		/*
-        List<Task> chunkTasks = new List<Task>();
+		List<(int, int)> newChunks = new List<(int, int)>();
 
 		for (int i = -1; i <= 1; i++)
 			for (int j = -1; j <= 1; j++)
-				if (i != j || i != 0)
-					chunkTasks.Add(ChechChunk((currentChunk.Item1 + i, currentChunk.Item2 + j)));
+				if (ChechChunk((currentChunk.Item1 + i, currentChunk.Item2 + j)))
+					newChunks.Add((currentChunk.Item1 + i, currentChunk.Item2 + j));
 
-        ChechChunk(currentChunk);
+		if (newChunks.Count == 0)
+			return;
 
-		for (int i = -1; i <= 1; i++)
-			for (int j = -1; j <= 1; j++)
-				if (i != j || i != 0)
-					HeightMapRenderer[(currentChunk.Item1 + i, currentChunk.Item2 + j)].materials[0].mainTexture =
-						TextureGenerator.GetTexture(Side, Side, Tiles[(currentChunk.Item1 + i, currentChunk.Item2 + j)]);
-		*/
+		canGenerate = false;
+
+        await Task.Run(() => GenerateMap(seed, newChunks));
+
+		foreach ((int, int) coords in newChunks)
+					HeightMapRenderer[coords].materials[0].mainTexture =
+						TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
+
+		canGenerate = true;
     }
 
-	private void ChechChunk((int, int) coords)
+	private bool ChechChunk((int, int) coords)
 	{
 		if (chunks.Keys.Contains(coords))
-			return;
+			return false;
 
 		GameObject chunkObj = Instantiate(chunkPrefab, new Vector3(coords.Item1 * chunkSize, coords.Item2 * chunkSize, 0), Quaternion.identity);
 		chunkObj.transform.SetParent(transform);
@@ -91,7 +95,8 @@ public class Generator : MonoBehaviour
 
 		HeightMapRenderer[coords] = chunkObj.GetComponent<MeshRenderer>();
         HeightMapRenderer[coords].material.SetFloat("_Glossiness", 0);
-        AddNewChunk(coords);
+
+		return true;
     }
 
     private async void RegenerateMap()
@@ -99,7 +104,7 @@ public class Generator : MonoBehaviour
 		canGenerate = false;
 
         // Генерация сидов в основном потоке (иначе Unity выдаст ошибку)
-        int seed = Random.Range(0, int.MaxValue);
+        seed = Random.Range(0, int.MaxValue);
 
         // Запускаем генерацию карты в фоновом потоке
         await Task.Run(() => GenerateMap(seed, true));
@@ -140,20 +145,19 @@ public class Generator : MonoBehaviour
         Debug.Log("Map has generated");
     }
 
+	private void GenerateMap(int seed, List<(int, int)> newChunks)
+	{
+        foreach ((int, int) coords in newChunks)
+            GenerateNewChunk(coords, true);
+        Debug.Log("New chunks have generated");
+    }
+
     private void GenerateNewChunk((int, int) coords, bool parallel = false)
 	{
 		GetData(HeightMap, ref HeightData, Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
 		LoadTiles(Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
 		if (!parallel)
 			HeightMapRenderer[coords].materials[0].mainTexture = TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
-    }
-
-    private void AddNewChunk((int, int) coords)
-	{
-		//await Task.Run(() => GenerateNewChunk(coords, true));
-		GenerateNewChunk(coords, true);
-
-        //HeightMapRenderer[coords].materials[0].mainTexture = TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
     }
 
 
