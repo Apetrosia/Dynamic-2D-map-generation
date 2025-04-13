@@ -18,14 +18,17 @@ public class Generator : MonoBehaviour
 	double TerrainFrequency = 1.25;
 	[SerializeField]
 	float[] borders;
-	int seed;
-	Dictionary<(int, int), Chunk> chunks;
+	int seedHeight;
+    int seedHeat;
+    Dictionary<(int, int), Chunk> chunks;
 	[SerializeField]
 	GameObject chunkPrefab;
 
     // private variables
+    ImplicitFractal HeatMap;
     ImplicitFractal HeightMap;
 	MapData HeightData;
+
 	Dictionary<(int, int), MyTile[,]> Tiles;
 
 	// Our texture output gameobject
@@ -72,7 +75,7 @@ public class Generator : MonoBehaviour
 
 		canGenerate = false;
 
-        await Task.Run(() => GenerateMap(seed, newChunks));
+        await Task.Run(() => GenerateMap(seedHeight, newChunks));
 
 		foreach ((int, int) coords in newChunks)
 					HeightMapRenderer[coords].materials[0].mainTexture =
@@ -104,10 +107,10 @@ public class Generator : MonoBehaviour
 		canGenerate = false;
 
         // Генерация сидов в основном потоке (иначе Unity выдаст ошибку)
-        seed = Random.Range(0, int.MaxValue);
+        seedHeight = Random.Range(0, int.MaxValue);
 
         // Запускаем генерацию карты в фоновом потоке
-        await Task.Run(() => GenerateMap(seed, true));
+        await Task.Run(() => GenerateMap(seedHeight, true));
 
         // После завершения фоновой задачи обновляем объекты в основном потоке
         ApplyMap();
@@ -137,15 +140,15 @@ public class Generator : MonoBehaviour
         }
     }
 
-	private void GenerateMap(int seed, bool parallel = false)
+	private void GenerateMap(int seedHeight, bool parallel = false)
 	{
-        Initialize(seed);
+        Initialize();
         foreach ((int, int) coords in chunks.Keys)
             GenerateNewChunk(coords, parallel);
         Debug.Log("Map has generated");
     }
 
-	private void GenerateMap(int seed, List<(int, int)> newChunks)
+	private void GenerateMap(int seedHeight, List<(int, int)> newChunks)
 	{
         foreach ((int, int) coords in newChunks)
             GenerateNewChunk(coords, true);
@@ -161,7 +164,7 @@ public class Generator : MonoBehaviour
     }
 
 
-    private void Initialize(int seed)
+    private void Initialize()
 	{
 		// Initialize the HeightMap Generator
 		HeightMap = new ImplicitFractal (FractalType.MULTI, 
@@ -169,7 +172,13 @@ public class Generator : MonoBehaviour
 		                               InterpolationType.QUINTIC, 
 		                               TerrainOctaves, 
 		                               TerrainFrequency,
-                                       seed);
+                                       seedHeight);
+		HeatMap = new ImplicitFractal(FractalType.MULTI,
+                                       BasisType.SIMPLEX,
+                                       InterpolationType.QUINTIC,
+                                       TerrainOctaves,
+                                       TerrainFrequency,
+                                       seedHeat);
         HeightData = new MapData ();
 		Tiles = new Dictionary<(int, int), MyTile[,]> ();
     }
