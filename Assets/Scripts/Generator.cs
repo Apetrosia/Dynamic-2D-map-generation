@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Unity.Collections.LowLevel.Unsafe;
 using System.Linq;
 using Unity.VisualScripting;
+using UnityEngine.Profiling.Memory.Experimental;
+using JetBrains.Annotations;
 
 public class Generator : MonoBehaviour
 {
@@ -191,7 +193,7 @@ public class Generator : MonoBehaviour
                                        TerrainOctaves,
                                        TerrainFrequency,
                                        seedHeat);
-        HeatMap = new ImplicitFractal(FractalType.MULTI,
+        HumidMap = new ImplicitFractal(FractalType.MULTI,
                                        BasisType.SIMPLEX,
                                        InterpolationType.QUINTIC,
                                        TerrainOctaves,
@@ -219,7 +221,7 @@ public class Generator : MonoBehaviour
 				if (value > mapData.Max) mapData.Max = value;
 				if (value < mapData.Min) mapData.Min = value;
 
-				mapData.Data[(x,y)] = value;
+                mapData.Data[(x,y)] = value;
 			}
 		}	
 	}
@@ -251,6 +253,23 @@ public class Generator : MonoBehaviour
 					t.HeightType = HeightType.Forest;
 				else
 					t.HeightType = HeightType.Snow;
+
+                // TODO add heatmap
+                float term = (float)HeatMap.Get(x, y);
+                if (t.HeightType == HeightType.Desert)
+                    HeightData.Data[(x, y)] = term - 0.1f * t.HeightValue;
+                else if (t.HeightType == HeightType.Field)
+                    HeightData.Data[(x, y)] = term - 0.2f * t.HeightValue;
+                else if (t.HeightType == HeightType.Forest)
+                    HeightData.Data[(x, y)] = term - 0.3f * t.HeightValue;
+                else if (t.HeightType == HeightType.Snow)
+                    HeightData.Data[(x, y)] = term - 0.4f * t.HeightValue;
+
+                switch ((float)HumidMap.Get(x, y))
+				{
+					case 1:
+						break;
+				}
 				
 				Tiles[(offsetX / Side, offsetY / Side)][x - offsetX,y - offsetY] = t;
 			}
