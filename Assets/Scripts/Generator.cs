@@ -20,12 +20,14 @@ public class Generator : MonoBehaviour
 	float[] borders;
 	int seedHeight;
     int seedHeat;
+    int seedHumid;
     Dictionary<(int, int), Chunk> chunks;
 	[SerializeField]
 	GameObject chunkPrefab;
 
     // private variables
     ImplicitFractal HeatMap;
+    ImplicitFractal HumidMap;
     ImplicitFractal HeightMap;
 	MapData HeightData;
 
@@ -48,7 +50,7 @@ public class Generator : MonoBehaviour
 		playerPosition = GameObject.FindWithTag("Player").transform;
         HeightMapRenderer = new Dictionary<(int, int), MeshRenderer>();
         SetChunks();
-		GenerateMap(Random.Range(0, int.MaxValue));
+		GenerateMap();
 	}
 
 	private void Update()
@@ -75,7 +77,7 @@ public class Generator : MonoBehaviour
 
 		canGenerate = false;
 
-        await Task.Run(() => GenerateMap(seedHeight, newChunks));
+        await Task.Run(() => GenerateMap(newChunks));
 
 		foreach ((int, int) coords in newChunks)
 					HeightMapRenderer[coords].materials[0].mainTexture =
@@ -109,8 +111,12 @@ public class Generator : MonoBehaviour
         // Генерация сидов в основном потоке (иначе Unity выдаст ошибку)
         seedHeight = Random.Range(0, int.MaxValue);
 
+        seedHeat = Random.Range(0, int.MaxValue);
+
+        seedHumid = Random.Range(0, int.MaxValue);
+
         // Запускаем генерацию карты в фоновом потоке
-        await Task.Run(() => GenerateMap(seedHeight, true));
+        await Task.Run(() => GenerateMap(true));
 
         // После завершения фоновой задачи обновляем объекты в основном потоке
         ApplyMap();
@@ -140,15 +146,21 @@ public class Generator : MonoBehaviour
         }
     }
 
-	private void GenerateMap(int seedHeight, bool parallel = false)
+	private void GenerateMap(bool parallel = false)
 	{
+		if (!parallel)
+		{
+            seedHeight = Random.Range(0, int.MaxValue);
+            seedHeat = Random.Range(0, int.MaxValue);
+            seedHumid = Random.Range(0, int.MaxValue);
+        }
         Initialize();
         foreach ((int, int) coords in chunks.Keys)
             GenerateNewChunk(coords, parallel);
         Debug.Log("Map has generated");
     }
 
-	private void GenerateMap(int seedHeight, List<(int, int)> newChunks)
+	private void GenerateMap(List<(int, int)> newChunks)
 	{
         foreach ((int, int) coords in newChunks)
             GenerateNewChunk(coords, true);
@@ -157,7 +169,7 @@ public class Generator : MonoBehaviour
 
     private void GenerateNewChunk((int, int) coords, bool parallel = false)
 	{
-		GetData(HeightMap, ref HeightData, Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
+		GetData(ref HeightData, Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
 		LoadTiles(Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
 		if (!parallel)
 			HeightMapRenderer[coords].materials[0].mainTexture = TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
@@ -166,8 +178,8 @@ public class Generator : MonoBehaviour
 
     private void Initialize()
 	{
-		// Initialize the HeightMap Generator
-		HeightMap = new ImplicitFractal (FractalType.MULTI, 
+        // Initialize the HeightMap Generator
+        HeightMap = new ImplicitFractal (FractalType.MULTI, 
 		                               BasisType.SIMPLEX, 
 		                               InterpolationType.QUINTIC, 
 		                               TerrainOctaves, 
@@ -179,12 +191,18 @@ public class Generator : MonoBehaviour
                                        TerrainOctaves,
                                        TerrainFrequency,
                                        seedHeat);
+        HeatMap = new ImplicitFractal(FractalType.MULTI,
+                                       BasisType.SIMPLEX,
+                                       InterpolationType.QUINTIC,
+                                       TerrainOctaves,
+                                       TerrainFrequency,
+                                       seedHumid);
         HeightData = new MapData ();
 		Tiles = new Dictionary<(int, int), MyTile[,]> ();
     }
 	
 	// Extract data from a noise module
-	private void GetData(ImplicitModuleBase module, ref MapData mapData, int offsetX = 0, int offsetY = 0)
+	private void GetData(ref MapData mapData, int offsetX = 0, int offsetY = 0)
 	{
 		// loop through each x,y point - get height value
 		for (var x = offsetX; x < Side + offsetX; x++)
@@ -226,13 +244,13 @@ public class Generator : MonoBehaviour
 				
 				//HeightMap Analyze
 				if (value < borders[0])
-					t.HeightType = HeightType.Dirt;
+					t.HeightType = HeightType.Desert;
 				else if (value < borders[1])
-					t.HeightType = HeightType.DryGrass;
+					t.HeightType = HeightType.Field;
 				else if (value < borders[2])
-					t.HeightType = HeightType.LightGrass;
+					t.HeightType = HeightType.Forest;
 				else
-					t.HeightType = HeightType.DarkGrass;
+					t.HeightType = HeightType.Snow;
 				
 				Tiles[(offsetX / Side, offsetY / Side)][x - offsetX,y - offsetY] = t;
 			}

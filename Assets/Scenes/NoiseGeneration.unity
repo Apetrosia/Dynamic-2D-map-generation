@@ -525,10 +525,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Side: 256
-  TerrainOctaves: 4
-  TerrainFrequency: 1
+  TerrainOctaves: 5
+  TerrainFrequency: 0.7
   borders:
-  - 0.15
+  - 0.2
   - 0.4
   - 0.6
   chunkPrefab: {fileID: 5198791829087745450, guid: 8cc3a498422194e4f816dd566c88109e,
