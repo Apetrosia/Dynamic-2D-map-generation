@@ -86,14 +86,6 @@ public class Generator : MonoBehaviour
 
 		Initialize(false);
 
-		/*
-		tasks.Add(Task.Run(() => GenerateMap(chunksToAdd.GetRange(0, chunksToAdd.Count / 2))));
-        tasks.Add(Task.Run(() => GenerateMap(chunksToAdd.GetRange(chunksToAdd.Count / 2,
-			chunksToAdd.Count / 2 + chunksToAdd.Count % 2))));
-		*/
-
-		//await Task.WhenAll(tasks);
-
 		await Task.Run(() => GenerateMap(chunksToAdd));
 
         foreach ((int, int) coords in chunksToAdd)
