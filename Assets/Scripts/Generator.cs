@@ -97,7 +97,7 @@ public class Generator : MonoBehaviour
         foreach ((int, int) coords in chunksToAdd)
 					HeightMapRenderer[coords].materials[0].mainTexture =
 						TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
-		chunksToAdd.Clear();
+
 		canGenerate = true;
     }
 
