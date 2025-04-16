@@ -279,22 +279,20 @@ public class Generator : MonoBehaviour
 				t.X = x;
 				t.Y = y;
 				
-				float value = HeightData.Data[(x, y)];
-				value = (value - HeightData.Min) / (HeightData.Max - HeightData.Min);
+				float height = HeightData.Data[(x, y)];
+				height = (height - HeightData.Min) / (HeightData.Max - HeightData.Min);
 				
-				t.HeightValue = value;
+				t.HeightValue = height;
 				
-				//HeightMap Analyze
-				if (value < borders[0])
+				if (height < borders[0])
 					t.HeightType = HeightType.Desert;
-				else if (value < borders[1])
+				else if (height < borders[1])
 					t.HeightType = HeightType.Field;
-				else if (value < borders[2])
+				else if (height < borders[2])
 					t.HeightType = HeightType.Forest;
 				else
 					t.HeightType = HeightType.Snow;
 
-                // TODO add heatmap
                 float temp = HeatData.Data[(x, y)];
                 temp = (temp - HeatData.Min) / (HeatData.Max - HeatData.Min);
 

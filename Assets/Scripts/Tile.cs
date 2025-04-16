@@ -41,8 +41,5 @@ public class MyTile
 
 	public float HeightValue { get; set; }
     public int X, Y;
-		
-	public MyTile()
-	{
-	}
 }
+
