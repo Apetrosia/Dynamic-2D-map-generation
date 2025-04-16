@@ -28,12 +28,15 @@ public class Generator : MonoBehaviour
 	GameObject chunkPrefab;
 
     // private variables
+    ImplicitFractal HeightMap;
     ImplicitFractal HeatMap;
     ImplicitFractal HumidMap;
-    ImplicitFractal HeightMap;
 	MapData HeightData;
+    MapData HeatData;
+    MapData HumidData;
 
-	Dictionary<(int, int), MyTile[,]> Tiles;
+    Dictionary<(int, int), MyTile[,]> Tiles;
+	BiomType[,] biomTable;
 
 	// Our texture output gameobject
 	Dictionary<(int, int), MeshRenderer> HeightMapRenderer;
@@ -53,6 +56,10 @@ public class Generator : MonoBehaviour
 
     void Start()
 	{
+		biomTable = new BiomType[2, 3] {
+			{ BiomType.Ice, BiomType.Field, BiomType.Desert },
+			{ BiomType.Tundra, BiomType.Forest, BiomType.Field }
+		};
         playerPosition = GameObject.FindWithTag("Player").transform;
         HeightMapRenderer = new Dictionary<(int, int), MeshRenderer>();
         SetChunks();
@@ -71,8 +78,7 @@ public class Generator : MonoBehaviour
 
 	private async void CheckPlayerPosition()
 	{
-        var tasks = new List<Task>();
-        List<(int, int)> chunksToAdd = new List<(int, int)>();
+		List<(int, int)> chunksToAdd = new List<(int, int)>();
 
         for (int i = -1; i <= 1; i++)
 			for (int j = -1; j <= 1; j++)
@@ -181,7 +187,7 @@ public class Generator : MonoBehaviour
 
     private void GenerateNewChunk((int, int) coords, bool parallel = false)
 	{
-		GetData(ref HeightData, Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
+		GetData(Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
 		LoadTiles(Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
 		if (!parallel)
 				HeightMapRenderer[coords].materials[0].mainTexture = TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
@@ -202,23 +208,25 @@ public class Generator : MonoBehaviour
 			HeatMap = new ImplicitFractal(FractalType.MULTI,
 										   BasisType.SIMPLEX,
 										   InterpolationType.QUINTIC,
-										   TerrainOctaves,
-										   TerrainFrequency,
+										   TerrainOctaves - 1,
+										   TerrainFrequency - 0.1,
 										   seedHeat);
 			HumidMap = new ImplicitFractal(FractalType.MULTI,
 										   BasisType.SIMPLEX,
 										   InterpolationType.QUINTIC,
-										   TerrainOctaves,
-										   TerrainFrequency,
+										   TerrainOctaves - 1,
+										   TerrainFrequency - 0.1,
 										   seedHumid);
 		}
 
         HeightData = new MapData ();
-		Tiles = new Dictionary<(int, int), MyTile[,]> ();
+        HeatData = new MapData();
+        HumidData = new MapData();
+        Tiles = new Dictionary<(int, int), MyTile[,]> ();
     }
 	
 	// Extract data from a noise module
-	private void GetData(ref MapData mapData, int offsetX = 0, int offsetY = 0)
+	private void GetData(int offsetX = 0, int offsetY = 0)
 	{
 		// loop through each x,y point - get height value
 		for (var x = offsetX; x < Side + offsetX; x++)
@@ -229,16 +237,26 @@ public class Generator : MonoBehaviour
 				float x1 = x / (float)Side;
 				float y1 = y / (float)Side;
 
-				float value = (float)HeightMap.Get (x1, y1);
+				float value1 = (float)HeightMap.Get (x1, y1);
+                float value2 = (float)HeatMap.Get(x1, y1);
+                float value3 = (float)HumidMap.Get(x1, y1);
 
-				//keep track of the max and min values found
-				if (value > mapData.Max) mapData.Max = value;
-				if (value < mapData.Min) mapData.Min = value;
+                //keep track of the max and min values found
+                if (value1 > HeightData.Max) HeightData.Max = value1;
+				if (value1 < HeightData.Min) HeightData.Min = value1;
 
-				lock (mapData)
+                if (value2 > HeatData.Max) HeatData.Max = value2;
+                if (value2 < HeatData.Min) HeatData.Min = value2;
+
+                if (value3 > HumidData.Max) HumidData.Max = value3;
+                if (value3 < HumidData.Min) HumidData.Min = value3;
+
+                lock (_mapsLock)
 				{
-					mapData.Data[(x, y)] = value;
-				}
+                    HeightData.Data[(x, y)] = value1;
+                    HeatData.Data[(x, y)] = value2;
+                    HumidData.Data[(x, y)] = value3;
+                }
 			}
 		}	
 	}
@@ -275,21 +293,35 @@ public class Generator : MonoBehaviour
 					t.HeightType = HeightType.Snow;
 
                 // TODO add heatmap
-                float term = (float)HeatMap.Get(x, y);
-                if (t.HeightType == HeightType.Desert)
-                    HeightData.Data[(x, y)] = term - 0.1f * t.HeightValue;
-                else if (t.HeightType == HeightType.Field)
-                    HeightData.Data[(x, y)] = term - 0.2f * t.HeightValue;
-                else if (t.HeightType == HeightType.Forest)
-                    HeightData.Data[(x, y)] = term - 0.3f * t.HeightValue;
-                else if (t.HeightType == HeightType.Snow)
-                    HeightData.Data[(x, y)] = term - 0.4f * t.HeightValue;
+                float temp = HeatData.Data[(x, y)];
+                temp = (temp - HeatData.Min) / (HeatData.Max - HeatData.Min);
 
-                switch ((float)HumidMap.Get(x, y))
-				{
-					case 1:
-						break;
-				}
+                if (t.HeightType == HeightType.Desert)
+                    temp -= 0.01f * t.HeightValue;
+                else if (t.HeightType == HeightType.Field)
+                    temp -= 0.02f * t.HeightValue;
+                else if (t.HeightType == HeightType.Forest)
+                    temp -= 0.03f * t.HeightValue;
+                else if (t.HeightType == HeightType.Snow)
+                    temp -= 0.04f * t.HeightValue;
+
+				if (temp < 0.1)
+					t.HeatType = HeatType.Low;
+				else if (temp < 0.4)
+					t.HeatType = HeatType.Medium;
+				else
+					t.HeatType = HeatType.Hight;
+
+
+				float h = HumidData.Data[(x, y)];
+                h = (h - HumidData.Min) / (HumidData.Max - HumidData.Min);
+
+                if (h < 0.5)
+					t.HumidType = HumidType.Low;
+				else
+					t.HumidType = HumidType.Hight;
+
+				t.BiomType = biomTable[(int)t.HumidType - 1, (int)t.HeatType - 1];
 
 				lock (_tilesLock)
 				{

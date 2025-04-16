@@ -1,12 +1,13 @@
 ﻿using UnityEngine;
 
-public static class TextureGenerator {		
+public static class TextureGenerator {
 
-	// Height Map Colors
-	private static Color DesertColor = new Color(255 / 255f, 255 / 255f, 143 / 255f, 1); //new Color(235/255f, 178/255f, 45/255f, 1);
-    private static Color FieldColor = new Color(180 / 255f, 240 / 255f, 158 / 255f, 1); //new Color(1, 242/255f, 184/255f, 1);
-    private static Color ForestColor = new Color(29 / 255f, 84 / 255f, 33 / 255f, 1); //new Color(95/255f, 161/255f, 63/255f, 1);
-    private static Color SnowColor = new Color(174 / 255f, 230 / 255f, 226 / 255f, 1); //new Color(34/255f, 115/255f, 20/ 255f, 1);
+    // Height Map Colors
+    private static Color IceColor = new Color(227 / 255f, 255 / 255f, 252 / 255f, 1);
+    private static Color TundraColor = new Color(23 / 255f, 38 / 255f, 31 / 255f, 1);
+    private static Color ForestColor = new Color(20 / 255f, 82 / 255f, 11 / 255f, 1);
+    private static Color FieldColor = new Color(90 / 255f, 179 / 255f, 27 / 255f, 1);
+    private static Color DesertColor = new Color(173 / 255f, 173 / 255f, 97 / 255f, 1);
 
 
     public static Texture2D GetTexture(int width, int height, MyTile[,] tiles)
@@ -18,21 +19,24 @@ public static class TextureGenerator {
 		{
 			for (var y = 0; y < height; y++)
 			{
-				switch (tiles[x,y].HeightType)
+				switch (tiles[x,y].BiomType)
 				{
-				case HeightType.Desert:
-					pixels[x + y * width] = DesertColor;
-					break;
-				case HeightType.Field:
-					pixels[x + y * width] = FieldColor;
-					break;
-				case HeightType.Forest:
-					pixels[x + y * width] = ForestColor;
-					break;
-				case HeightType.Snow:
-					pixels[x + y * width] = SnowColor;
-					break;
-				}
+					case BiomType.Ice:
+						pixels[x + y * width] = IceColor;
+						break;
+					case BiomType.Tundra:
+						pixels[x + y * width] = TundraColor;
+						break;
+					case BiomType.Forest:
+                        pixels[x + y * width] = ForestColor;
+                        break;
+					case BiomType.Field:
+						pixels[x + y * width] = FieldColor;
+						break;
+					case BiomType.Desert:
+						pixels[x + y * width] = DesertColor;
+						break;
+                }
 			}
 		}
 		

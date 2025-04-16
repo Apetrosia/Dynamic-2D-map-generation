@@ -10,7 +10,7 @@ public enum HeightType
     Snow = 4,
 }
 
-public enum WarmType
+public enum HeatType
 {
     Low = 1,
     Medium = 2,
@@ -22,13 +22,25 @@ public enum HumidType
     Low = 1,
     Hight = 2,
 }
+
+public enum BiomType
+{
+    Ice = 1,
+    Tundra = 2,
+    Forest = 3,
+    Field = 4,
+    Desert = 5
+}
+
 public class MyTile
 {
 	public HeightType HeightType;
-    public WarmType WarmType;
+    public HeatType HeatType;
     public HumidType HumidType;
+    public BiomType BiomType;
+
 	public float HeightValue { get; set; }
-	public int X, Y;
+    public int X, Y;
 		
 	public MyTile()
 	{
