@@ -39,7 +39,7 @@ public class Generator : MonoBehaviour
 	BiomType[,] biomTable;
 
 	// Our texture output gameobject
-	Dictionary<(int, int), MeshRenderer> HeightMapRenderer;
+	Dictionary<(int, int), MeshRenderer> MapRenderer;
 	bool canGenerate = true;
 
 	// For player monitoring
@@ -61,7 +61,7 @@ public class Generator : MonoBehaviour
 			{ BiomType.Tundra, BiomType.Forest, BiomType.Field }
 		};
         playerPosition = GameObject.FindWithTag("Player").transform;
-        HeightMapRenderer = new Dictionary<(int, int), MeshRenderer>();
+        MapRenderer = new Dictionary<(int, int), MeshRenderer>();
         SetChunks();
 		GenerateMap();
 	}
@@ -95,7 +95,7 @@ public class Generator : MonoBehaviour
 		await Task.Run(() => GenerateMap(chunksToAdd));
 
         foreach ((int, int) coords in chunksToAdd)
-					HeightMapRenderer[coords].materials[0].mainTexture =
+					MapRenderer[coords].materials[0].mainTexture =
 						TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
 
 		canGenerate = true;
@@ -111,7 +111,9 @@ public class Generator : MonoBehaviour
 				return true;
 		}
 
-		GameObject chunkObj = Instantiate(chunkPrefab, new Vector3(coords.Item1 * chunkSize, coords.Item2 * chunkSize, 0), Quaternion.identity);
+		GameObject chunkObj = Instantiate(chunkPrefab,
+			new Vector3(coords.Item1 * chunkSize, coords.Item2 * chunkSize, 0),
+			Quaternion.identity);
 		chunkObj.transform.SetParent(transform);
 
 		lock (_texturesLock)
@@ -120,8 +122,8 @@ public class Generator : MonoBehaviour
 			chunks[coords].offsetX = coords.Item1;
 			chunks[coords].offsetY = coords.Item2;
 
-			HeightMapRenderer[coords] = chunkObj.GetComponent<MeshRenderer>();
-			HeightMapRenderer[coords].material.SetFloat("_Glossiness", 0);
+			MapRenderer[coords] = chunkObj.GetComponent<MeshRenderer>();
+			MapRenderer[coords].material.SetFloat("_Glossiness", 0);
 		}
 
 		return true;
@@ -145,8 +147,8 @@ public class Generator : MonoBehaviour
     private void ApplyMap()
     {
 		foreach ((int, int) coords in chunks.Keys)
-			if (HeightMapRenderer.ContainsKey(coords))
-				HeightMapRenderer[coords].materials[0].mainTexture =
+			if (MapRenderer.ContainsKey(coords))
+				MapRenderer[coords].materials[0].mainTexture =
 					TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
     }
 
@@ -160,7 +162,7 @@ public class Generator : MonoBehaviour
 			int y = transform.GetChild(i).GetComponent<Chunk>().offsetY;
 
 			chunks[(x, y)] = transform.GetChild(i).GetComponent<Chunk>();
-            HeightMapRenderer[(x, y)] = transform.GetChild(i).GetComponent<MeshRenderer>();
+            MapRenderer[(x, y)] = transform.GetChild(i).GetComponent<MeshRenderer>();
         }
     }
 
@@ -190,7 +192,7 @@ public class Generator : MonoBehaviour
 		GetData(Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
 		LoadTiles(Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
 		if (!parallel)
-				HeightMapRenderer[coords].materials[0].mainTexture = TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
+				MapRenderer[coords].materials[0].mainTexture = TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
     }
 
 
