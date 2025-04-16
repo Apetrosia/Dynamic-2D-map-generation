@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Chunk : MonoBehaviour
 {
+    public bool isGenerated = false;
     public int offsetX;
     public int offsetY;
 }

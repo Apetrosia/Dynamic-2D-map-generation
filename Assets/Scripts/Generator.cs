@@ -47,9 +47,13 @@ public class Generator : MonoBehaviour
     //int currentOffsetY = 0;
     Transform playerPosition;
 
-	void Start()
+    private readonly object _tilesLock = new object();
+    private readonly object _mapsLock = new object();
+    private readonly object _texturesLock = new object();
+
+    void Start()
 	{
-		playerPosition = GameObject.FindWithTag("Player").transform;
+        playerPosition = GameObject.FindWithTag("Player").transform;
         HeightMapRenderer = new Dictionary<(int, int), MeshRenderer>();
         SetChunks();
 		GenerateMap();
@@ -67,41 +71,60 @@ public class Generator : MonoBehaviour
 
 	private async void CheckPlayerPosition()
 	{
-		List<(int, int)> newChunks = new List<(int, int)>();
+        var tasks = new List<Task>();
+        List<(int, int)> chunksToAdd = new List<(int, int)>();
 
-		for (int i = -1; i <= 1; i++)
+        for (int i = -1; i <= 1; i++)
 			for (int j = -1; j <= 1; j++)
-				if (ChechChunk((currentChunk.Item1 + i, currentChunk.Item2 + j)))
-					newChunks.Add((currentChunk.Item1 + i, currentChunk.Item2 + j));
+				if (CheckChunk((currentChunk.Item1 + i, currentChunk.Item2 + j)))
+                    chunksToAdd.Add((currentChunk.Item1 + i, currentChunk.Item2 + j));
 
-		if (newChunks.Count == 0)
+		if (chunksToAdd.Count == 0 || !canGenerate)
 			return;
 
 		canGenerate = false;
 
-        await Task.Run(() => GenerateMap(newChunks));
+		Initialize(false);
 
-		foreach ((int, int) coords in newChunks)
+		/*
+		tasks.Add(Task.Run(() => GenerateMap(chunksToAdd.GetRange(0, chunksToAdd.Count / 2))));
+        tasks.Add(Task.Run(() => GenerateMap(chunksToAdd.GetRange(chunksToAdd.Count / 2,
+			chunksToAdd.Count / 2 + chunksToAdd.Count % 2))));
+		*/
+
+		//await Task.WhenAll(tasks);
+
+		await Task.Run(() => GenerateMap(chunksToAdd));
+
+        foreach ((int, int) coords in chunksToAdd)
 					HeightMapRenderer[coords].materials[0].mainTexture =
 						TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
-
+		chunksToAdd.Clear();
 		canGenerate = true;
     }
 
-	private bool ChechChunk((int, int) coords)
+	private bool CheckChunk((int, int) coords)
 	{
 		if (chunks.Keys.Contains(coords))
-			return false;
+		{
+			if (chunks[coords].isGenerated)
+				return false;
+			else
+				return true;
+		}
 
 		GameObject chunkObj = Instantiate(chunkPrefab, new Vector3(coords.Item1 * chunkSize, coords.Item2 * chunkSize, 0), Quaternion.identity);
 		chunkObj.transform.SetParent(transform);
 
-		chunks[coords] = chunkObj.GetComponent<Chunk>();
-		chunks[coords].offsetX = coords.Item1;
-		chunks[coords].offsetY = coords.Item2;
+		lock (_texturesLock)
+		{
+			chunks[coords] = chunkObj.GetComponent<Chunk>();
+			chunks[coords].offsetX = coords.Item1;
+			chunks[coords].offsetY = coords.Item2;
 
-		HeightMapRenderer[coords] = chunkObj.GetComponent<MeshRenderer>();
-        HeightMapRenderer[coords].material.SetFloat("_Glossiness", 0);
+			HeightMapRenderer[coords] = chunkObj.GetComponent<MeshRenderer>();
+			HeightMapRenderer[coords].material.SetFloat("_Glossiness", 0);
+		}
 
 		return true;
     }
@@ -110,17 +133,12 @@ public class Generator : MonoBehaviour
     {
 		canGenerate = false;
 
-        // Генерация сидов в основном потоке (иначе Unity выдаст ошибку)
         seedHeight = Random.Range(0, int.MaxValue);
-
         seedHeat = Random.Range(0, int.MaxValue);
-
         seedHumid = Random.Range(0, int.MaxValue);
 
-        // Запускаем генерацию карты в фоновом потоке
         await Task.Run(() => GenerateMap(true));
 
-        // После завершения фоновой задачи обновляем объекты в основном потоке
         ApplyMap();
 
 		canGenerate = true;
@@ -162,9 +180,9 @@ public class Generator : MonoBehaviour
         Debug.Log("Map has generated");
     }
 
-	private void GenerateMap(List<(int, int)> newChunks)
-	{
-        foreach ((int, int) coords in newChunks)
+    private void GenerateMap(List<(int, int)> chunksToAdd)
+    {
+        foreach ((int, int) coords in chunksToAdd)
             GenerateNewChunk(coords, true);
         Debug.Log("New chunks have generated");
     }
@@ -174,31 +192,35 @@ public class Generator : MonoBehaviour
 		GetData(ref HeightData, Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
 		LoadTiles(Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
 		if (!parallel)
-			HeightMapRenderer[coords].materials[0].mainTexture = TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
+				HeightMapRenderer[coords].materials[0].mainTexture = TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
     }
 
 
-    private void Initialize()
+    private void Initialize(bool newSeed = true)
 	{
-        // Initialize the HeightMap Generator
-        HeightMap = new ImplicitFractal (FractalType.MULTI, 
-		                               BasisType.SIMPLEX, 
-		                               InterpolationType.QUINTIC, 
-		                               TerrainOctaves, 
-		                               TerrainFrequency,
-                                       seedHeight);
-		HeatMap = new ImplicitFractal(FractalType.MULTI,
-                                       BasisType.SIMPLEX,
-                                       InterpolationType.QUINTIC,
-                                       TerrainOctaves,
-                                       TerrainFrequency,
-                                       seedHeat);
-        HumidMap = new ImplicitFractal(FractalType.MULTI,
-                                       BasisType.SIMPLEX,
-                                       InterpolationType.QUINTIC,
-                                       TerrainOctaves,
-                                       TerrainFrequency,
-                                       seedHumid);
+		if (newSeed)
+		{
+			// Initialize the HeightMap Generator
+			HeightMap = new ImplicitFractal(FractalType.MULTI,
+										   BasisType.SIMPLEX,
+										   InterpolationType.QUINTIC,
+										   TerrainOctaves,
+										   TerrainFrequency,
+										   seedHeight);
+			HeatMap = new ImplicitFractal(FractalType.MULTI,
+										   BasisType.SIMPLEX,
+										   InterpolationType.QUINTIC,
+										   TerrainOctaves,
+										   TerrainFrequency,
+										   seedHeat);
+			HumidMap = new ImplicitFractal(FractalType.MULTI,
+										   BasisType.SIMPLEX,
+										   InterpolationType.QUINTIC,
+										   TerrainOctaves,
+										   TerrainFrequency,
+										   seedHumid);
+		}
+
         HeightData = new MapData ();
 		Tiles = new Dictionary<(int, int), MyTile[,]> ();
     }
@@ -221,7 +243,10 @@ public class Generator : MonoBehaviour
 				if (value > mapData.Max) mapData.Max = value;
 				if (value < mapData.Min) mapData.Min = value;
 
-                mapData.Data[(x,y)] = value;
+				lock (mapData)
+				{
+					mapData.Data[(x, y)] = value;
+				}
 			}
 		}	
 	}
@@ -229,7 +254,10 @@ public class Generator : MonoBehaviour
 	// Build a Tile array from our data
 	private void LoadTiles(int offsetX = 0, int offsetY = 0)
 	{
-		Tiles[(offsetX / Side, offsetY / Side)] = new MyTile[Side, Side];
+		lock (_tilesLock)
+		{
+			Tiles[(offsetX / Side, offsetY / Side)] = new MyTile[Side, Side];
+		}
 		
 		for (var x = offsetX; x < Side + offsetX; x++)
 		{
@@ -270,8 +298,11 @@ public class Generator : MonoBehaviour
 					case 1:
 						break;
 				}
-				
-				Tiles[(offsetX / Side, offsetY / Side)][x - offsetX,y - offsetY] = t;
+
+				lock (_tilesLock)
+				{
+					Tiles[(offsetX / Side, offsetY / Side)][x - offsetX, y - offsetY] = t;
+				}
 			}
 		}
 	}
