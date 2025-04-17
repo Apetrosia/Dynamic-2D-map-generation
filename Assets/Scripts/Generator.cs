@@ -118,6 +118,7 @@ public class Generator : MonoBehaviour
 			MapRenderer[coords].materials[0].mainTexture =
 				TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
 			GenerateObjects(coords);
+			chunks[coords].isGenerated = true;
 		}
 
         canGenerate = true;
@@ -126,7 +127,11 @@ public class Generator : MonoBehaviour
 	private bool CheckChunk((int, int) coords)
 	{
 		if (chunks.Keys.Contains(coords))
-			return false;
+		{
+			if (chunks[coords].isGenerated)
+				return false;
+			return true;
+		}
 
 		GameObject chunkObj = Instantiate(chunkPrefab,
 			new Vector3(coords.Item1 * chunkSize, coords.Item2 * chunkSize, 0),
@@ -249,7 +254,7 @@ public class Generator : MonoBehaviour
     {
         canGenerate = false;
 
-		for (int i = 0; i < Random.Range(5, 7); i++)
+		for (int i = 0; i < Random.Range(7, 10); i++)
 		{
 			(int, int) position = (Random.Range(0, Side), Random.Range(0, Side));
 			if (Tiles[coords][position.Item1, position.Item2].haveObject)
