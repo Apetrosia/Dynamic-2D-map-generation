@@ -13,7 +13,7 @@ public class Generator : MonoBehaviour
 {
 	// Adjustable variables for Unity Inspector
 	[SerializeField]
-	int Side = 512;
+	int Side = 256;
 	[SerializeField]
 	int TerrainOctaves = 6;
 	[SerializeField]
@@ -50,21 +50,40 @@ public class Generator : MonoBehaviour
     //int currentOffsetY = 0;
     Transform playerPosition;
 
+	[SerializeField]
+	GameObject[] iceObjects;
+    [SerializeField]
+    GameObject[] tundraObjects;
+    [SerializeField]
+    GameObject[] forestObjects;
+    [SerializeField]
+    GameObject[] fieldObjects;
+    [SerializeField]
+    GameObject[] desertObjects;
+
     private readonly object _tilesLock = new object();
     private readonly object _mapsLock = new object();
     private readonly object _texturesLock = new object();
 
-    void Start()
-	{
-		biomTable = new BiomType[2, 3] {
-			{ BiomType.Ice, BiomType.Field, BiomType.Desert },
-			{ BiomType.Tundra, BiomType.Forest, BiomType.Field }
-		};
+    void Awake()
+    {
         playerPosition = GameObject.FindWithTag("Player").transform;
         MapRenderer = new Dictionary<(int, int), MeshRenderer>();
+        biomTable = new BiomType[2, 3] {
+            { BiomType.Ice, BiomType.Field, BiomType.Desert },
+            { BiomType.Tundra, BiomType.Forest, BiomType.Field }
+        };
+    }
+
+    void Start()
+	{
+		canGenerate = false;
         SetChunks();
 		GenerateMap();
-	}
+		foreach ((int, int) coords in chunks.Keys)
+			GenerateObjects(coords);
+		canGenerate = true;
+    }
 
 	private void Update()
 	{
@@ -94,22 +113,20 @@ public class Generator : MonoBehaviour
 
 		await Task.Run(() => GenerateMap(chunksToAdd));
 
-        foreach ((int, int) coords in chunksToAdd)
-					MapRenderer[coords].materials[0].mainTexture =
-						TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
+		foreach ((int, int) coords in chunksToAdd)
+		{
+			MapRenderer[coords].materials[0].mainTexture =
+				TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
+			GenerateObjects(coords);
+		}
 
-		canGenerate = true;
+        canGenerate = true;
     }
 
 	private bool CheckChunk((int, int) coords)
 	{
 		if (chunks.Keys.Contains(coords))
-		{
-			if (chunks[coords].isGenerated)
-				return false;
-			else
-				return true;
-		}
+			return false;
 
 		GameObject chunkObj = Instantiate(chunkPrefab,
 			new Vector3(coords.Item1 * chunkSize, coords.Item2 * chunkSize, 0),
@@ -139,9 +156,12 @@ public class Generator : MonoBehaviour
 
         await Task.Run(() => GenerateMap(true));
 
-        ApplyMap();
+        foreach ((int, int) coords in chunks.Keys)
+			GenerateObjects(coords);
 
-		canGenerate = true;
+		ApplyMap();
+
+        canGenerate = true;
     }
 
     private void ApplyMap()
@@ -175,16 +195,14 @@ public class Generator : MonoBehaviour
             seedHumid = Random.Range(0, int.MaxValue);
         }
         Initialize();
-        foreach ((int, int) coords in chunks.Keys)
-            GenerateNewChunk(coords, parallel);
-        Debug.Log("Map has generated");
+		foreach ((int, int) coords in chunks.Keys)
+			GenerateNewChunk(coords, parallel);
     }
 
     private void GenerateMap(List<(int, int)> chunksToAdd)
     {
         foreach ((int, int) coords in chunksToAdd)
             GenerateNewChunk(coords, true);
-        Debug.Log("New chunks have generated");
     }
 
     private void GenerateNewChunk((int, int) coords, bool parallel = false)
@@ -226,9 +244,62 @@ public class Generator : MonoBehaviour
         HumidData = new MapData();
         Tiles = new Dictionary<(int, int), MyTile[,]> ();
     }
-	
-	// Extract data from a noise module
-	private void GetData(int offsetX = 0, int offsetY = 0)
+
+    private void GenerateObjects((int, int) coords)
+    {
+        canGenerate = false;
+
+		for (int i = 0; i < Random.Range(5, 7); i++)
+		{
+			(int, int) position = (Random.Range(0, Side), Random.Range(0, Side));
+			if (Tiles[coords][position.Item1, position.Item2].haveObject)
+				continue;
+			switch (Tiles[coords][position.Item1, position.Item2].BiomType)
+			{
+				//new Vector3(position.Item1 * chunkSize, position.Item2 * chunkSize, 0),
+				case BiomType.Ice:
+					Instantiate(iceObjects[Random.Range(0, iceObjects.Length)],
+						new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
+						(position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
+						Quaternion.identity);
+					Tiles[coords][position.Item1, position.Item2].haveObject = true;
+					break;
+				case BiomType.Tundra:
+                    Instantiate(tundraObjects[Random.Range(0, tundraObjects.Length)],
+                        new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
+                        (position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
+                        Quaternion.identity);
+                    Tiles[coords][position.Item1, position.Item2].haveObject = true;
+                    break;
+				case BiomType.Forest:
+                    Instantiate(forestObjects[Random.Range(0, forestObjects.Length)],
+                        new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
+                        (position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
+                        Quaternion.identity);
+                    Tiles[coords][position.Item1, position.Item2].haveObject = true;
+                    break;
+				case BiomType.Field:
+                    Instantiate(fieldObjects[Random.Range(0, fieldObjects.Length)],
+                        new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
+                        (position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
+                        Quaternion.identity);
+                    Tiles[coords][position.Item1, position.Item2].haveObject = true;
+                    break;
+				case BiomType.Desert:
+                    Instantiate(desertObjects[Random.Range(0, desertObjects.Length)],
+                        new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
+                        (position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
+                        Quaternion.identity);
+                    Tiles[coords][position.Item1, position.Item2].haveObject = true;
+                    break;
+			}
+		}
+
+        canGenerate = true;
+    }
+
+    // Extract data from a noise module
+    private void GetData(int offsetX = 0, int offsetY = 0)
 	{
 		// loop through each x,y point - get height value
 		for (var x = offsetX; x < Side + offsetX; x++)

@@ -38,6 +38,7 @@ public class MyTile
     public HeatType HeatType;
     public HumidType HumidType;
     public BiomType BiomType;
+    public bool haveObject = false;
 
 	public float HeightValue { get; set; }
     public int X, Y;
