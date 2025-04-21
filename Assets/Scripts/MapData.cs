@@ -2,13 +2,13 @@
 
 public class MapData {
 
-	public Dictionary<(float, float), float> Data;
+	public float[,] Data;
 	public float Min { get; set; }
 	public float Max { get; set; }
 
-	public MapData()
+	public MapData(int Side)
 	{
-		Data = new Dictionary<(float, float), float>();
+		Data = new float[Side, Side];
 		Min = float.MaxValue;
 		Max = float.MinValue;
 	}

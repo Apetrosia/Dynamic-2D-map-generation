@@ -73,6 +73,9 @@ public class Generator : MonoBehaviour
             { BiomType.Ice, BiomType.Field, BiomType.Desert },
             { BiomType.Tundra, BiomType.Forest, BiomType.Field }
         };
+        HeightData = new MapData(Side);
+        HeatData = new MapData(Side);
+        HumidData = new MapData(Side);
     }
 
     void Start()
@@ -138,15 +141,12 @@ public class Generator : MonoBehaviour
 			Quaternion.identity);
 		chunkObj.transform.SetParent(transform);
 
-		lock (_texturesLock)
-		{
-			chunks[coords] = chunkObj.GetComponent<Chunk>();
-			chunks[coords].offsetX = coords.Item1;
-			chunks[coords].offsetY = coords.Item2;
+		chunks[coords] = chunkObj.GetComponent<Chunk>();
+		chunks[coords].offsetX = coords.Item1;
+		chunks[coords].offsetY = coords.Item2;
 
-			MapRenderer[coords] = chunkObj.GetComponent<MeshRenderer>();
-			MapRenderer[coords].material.SetFloat("_Glossiness", 0);
-		}
+		MapRenderer[coords] = chunkObj.GetComponent<MeshRenderer>();
+		MapRenderer[coords].material.SetFloat("_Glossiness", 0);
 
 		return true;
     }
@@ -244,9 +244,6 @@ public class Generator : MonoBehaviour
 										   seedHumid);
 		}
 
-        HeightData = new MapData ();
-        HeatData = new MapData();
-        HumidData = new MapData();
         Tiles = new Dictionary<(int, int), MyTile[,]> ();
     }
 
@@ -329,12 +326,9 @@ public class Generator : MonoBehaviour
                 if (value3 > HumidData.Max) HumidData.Max = value3;
                 if (value3 < HumidData.Min) HumidData.Min = value3;
 
-                lock (_mapsLock)
-				{
-                    HeightData.Data[(x, y)] = value1;
-                    HeatData.Data[(x, y)] = value2;
-                    HumidData.Data[(x, y)] = value3;
-                }
+				HeightData.Data[x - offsetX, y - offsetY] = value1;
+				HeatData.Data[x - offsetX, y - offsetY] = value2;
+				HumidData.Data[x - offsetX, y - offsetY] = value3;
 			}
 		}	
 	}
@@ -342,10 +336,7 @@ public class Generator : MonoBehaviour
 	// Build a Tile array from our data
 	private void LoadTiles(int offsetX = 0, int offsetY = 0)
 	{
-		lock (_tilesLock)
-		{
-			Tiles[(offsetX / Side, offsetY / Side)] = new MyTile[Side, Side];
-		}
+		Tiles[(offsetX / Side, offsetY / Side)] = new MyTile[Side, Side];
 		
 		for (var x = offsetX; x < Side + offsetX; x++)
 		{
@@ -355,7 +346,7 @@ public class Generator : MonoBehaviour
 				t.X = x;
 				t.Y = y;
 				
-				float height = HeightData.Data[(x, y)];
+				float height = HeightData.Data[x - offsetX, y - offsetY];
 				height = (height - HeightData.Min) / (HeightData.Max - HeightData.Min);
 				
 				t.HeightValue = height;
@@ -369,7 +360,7 @@ public class Generator : MonoBehaviour
 				else
 					t.HeightType = HeightType.Snow;
 
-                float temp = HeatData.Data[(x, y)];
+                float temp = HeatData.Data[x - offsetX, y - offsetY];
                 temp = (temp - HeatData.Min) / (HeatData.Max - HeatData.Min);
 
                 if (t.HeightType == HeightType.Desert)
@@ -389,7 +380,7 @@ public class Generator : MonoBehaviour
 					t.HeatType = HeatType.Hight;
 
 
-				float h = HumidData.Data[(x, y)];
+				float h = HumidData.Data[x - offsetX, y - offsetY];
                 h = (h - HumidData.Min) / (HumidData.Max - HumidData.Min);
 
                 if (h < 0.5)
@@ -399,10 +390,7 @@ public class Generator : MonoBehaviour
 
 				t.BiomType = biomTable[(int)t.HumidType - 1, (int)t.HeatType - 1];
 
-				lock (_tilesLock)
-				{
-					Tiles[(offsetX / Side, offsetY / Side)][x - offsetX, y - offsetY] = t;
-				}
+				Tiles[(offsetX / Side, offsetY / Side)][x - offsetX, y - offsetY] = t;
 			}
 		}
 	}
