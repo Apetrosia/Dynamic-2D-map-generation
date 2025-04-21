@@ -6,13 +6,18 @@ using System.Threading.Tasks;
 using Unity.Collections.LowLevel.Unsafe;
 using System.Linq;
 using Unity.VisualScripting;
-using UnityEngine.Profiling.Memory.Experimental;
-using JetBrains.Annotations;
 
 public class Generator : MonoBehaviour
 {
-	// Adjustable variables for Unity Inspector
-	[SerializeField]
+    public struct DataContainer
+    {
+        public float[,] Data;
+        public float Max;
+        public float Min;
+    }
+
+    // Adjustable variables for Unity Inspector
+    [SerializeField]
 	int Side = 256;
 	[SerializeField]
 	int TerrainOctaves = 6;
@@ -31,9 +36,9 @@ public class Generator : MonoBehaviour
     ImplicitFractal HeightMap;
     ImplicitFractal HeatMap;
     ImplicitFractal HumidMap;
-	MapData HeightData;
-    MapData HeatData;
-    MapData HumidData;
+	DataContainer HeightData;
+    DataContainer HeatData;
+    DataContainer HumidData;
 
     Dictionary<(int, int), MyTile[,]> Tiles;
 	BiomType[,] biomTable;
@@ -73,9 +78,9 @@ public class Generator : MonoBehaviour
             { BiomType.Ice, BiomType.Field, BiomType.Desert },
             { BiomType.Tundra, BiomType.Forest, BiomType.Field }
         };
-        HeightData = new MapData(Side);
-        HeatData = new MapData(Side);
-        HumidData = new MapData(Side);
+        HeightData.Data = new float[Side, Side];
+        HeatData.Data = new float[Side, Side];
+        HumidData.Data = new float[Side, Side];
     }
 
     void Start()
