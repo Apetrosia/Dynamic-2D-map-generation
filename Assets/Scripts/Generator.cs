@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -10,12 +11,6 @@ using UnityEngine.UIElements;
 
 public class Generator : MonoBehaviour
 {
-    public struct DataContainer
-    {
-        public float[,] Data;
-        public float Max;
-        public float Min;
-    }
 
     // Adjustable variables for Unity Inspector
     [SerializeField]
@@ -37,12 +32,12 @@ public class Generator : MonoBehaviour
     ImplicitFractal HeightMap;
     ImplicitFractal HeatMap;
     ImplicitFractal HumidMap;
-	DataContainer HeightData;
-    DataContainer HeatData;
-    DataContainer HumidData;
+    NativeArray<float> HeightData;
+    NativeArray<float> HeatData;
+    NativeArray<float> HumidData;
 
-    Dictionary<(int, int), MyTile[,]> Tiles;
-	BiomType[,] biomTable;
+    Dictionary<(int, int), MyTile[]> Tiles;
+	BiomType[] biomTable;
 
 	// Our texture output gameobject
 	Dictionary<(int, int), MeshRenderer> MapRenderer;
@@ -71,13 +66,10 @@ public class Generator : MonoBehaviour
     {
         playerPosition = GameObject.FindWithTag("Player").transform;
         MapRenderer = new Dictionary<(int, int), MeshRenderer>();
-        biomTable = new BiomType[2, 3] {
-            { BiomType.Ice, BiomType.Field, BiomType.Desert },
-            { BiomType.Tundra, BiomType.Forest, BiomType.Field }
-        };
-        HeightData.Data = new float[Side, Side];
-        HeatData.Data = new float[Side, Side];
-        HumidData.Data = new float[Side, Side];
+        biomTable = new BiomType[6] { BiomType.Ice, BiomType.Field, BiomType.Desert, BiomType.Tundra, BiomType.Forest, BiomType.Field};
+        HeightData = new NativeArray<float>(Side * Side, Allocator.Persistent);
+        HeatData = new NativeArray<float>(Side * Side, Allocator.Persistent);
+        HumidData = new NativeArray<float>(Side * Side, Allocator.Persistent);
     }
 
     void Start()
@@ -133,7 +125,7 @@ public class Generator : MonoBehaviour
 		foreach ((int, int) coords in chunksToAdd)
 		{
 			MapRenderer[coords].materials[0].mainTexture =
-				TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
+				TextureGenerator.GetTexture(Side, Tiles[coords]);
 			GenerateObjects(coords);
 		}
 
@@ -187,7 +179,7 @@ public class Generator : MonoBehaviour
 		foreach ((int, int) coords in chunks.Keys)
 			if (MapRenderer.ContainsKey(coords))
 				MapRenderer[coords].materials[0].mainTexture =
-					TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
+					TextureGenerator.GetTexture(Side, Tiles[coords]);
     }
 
     private void SetChunks()
@@ -229,7 +221,7 @@ public class Generator : MonoBehaviour
         GetData(Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
 		LoadTiles(Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
 		if (!parallel)
-				MapRenderer[coords].materials[0].mainTexture = TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
+				MapRenderer[coords].materials[0].mainTexture = TextureGenerator.GetTexture(Side, Tiles[coords]);
     }
 
 
@@ -258,7 +250,7 @@ public class Generator : MonoBehaviour
 										   seedHumid);
 		}
 
-        Tiles = new Dictionary<(int, int), MyTile[,]> ();
+        Tiles = new Dictionary<(int, int), MyTile[]> ();
     }
 
     private void GenerateObjects((int, int) coords)
@@ -273,9 +265,9 @@ public class Generator : MonoBehaviour
 		for (int i = 0; i < count; i++)
 		{
 			(int, int) position = (rand.Next(0, Side), rand.Next(0, Side));
-			if (Tiles[coords][position.Item1, position.Item2].haveObject)
+			if (Tiles[coords][position.Item1 + position.Item2 * Side].haveObject)
 				continue;
-			switch (Tiles[coords][position.Item1, position.Item2].BiomType)
+			switch (Tiles[coords][position.Item1 + position.Item2 * Side].BiomType)
 			{
 				//new Vector3(position.Item1 * chunkSize, position.Item2 * chunkSize, 0),
 				case BiomType.Ice:
@@ -283,35 +275,35 @@ public class Generator : MonoBehaviour
 						new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
 						(position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
 						Quaternion.identity).transform.SetParent(chunks[coords].transform, true);
-                    Tiles[coords][position.Item1, position.Item2].haveObject = true;
+                    Tiles[coords][position.Item1 + position.Item2 * Side].haveObject = true;
 					break;
 				case BiomType.Tundra:
                     Instantiate(tundraObjects[rand.Next(0, tundraObjects.Length)],
                         new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
                         (position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
                         Quaternion.identity).transform.SetParent(chunks[coords].transform, true);
-                    Tiles[coords][position.Item1, position.Item2].haveObject = true;
+                    Tiles[coords][position.Item1 + position.Item2 * Side].haveObject = true;
                     break;
 				case BiomType.Forest:
                     Instantiate(forestObjects[rand.Next(0, forestObjects.Length)],
                         new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
                         (position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
                         Quaternion.identity).transform.SetParent(chunks[coords].transform, true);
-                    Tiles[coords][position.Item1, position.Item2].haveObject = true;
+                    Tiles[coords][position.Item1 + position.Item2 * Side].haveObject = true;
                     break;
 				case BiomType.Field:
                     Instantiate(fieldObjects[rand.Next(0, fieldObjects.Length)],
                         new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
                         (position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
                         Quaternion.identity).transform.SetParent(chunks[coords].transform, true);
-                    Tiles[coords][position.Item1, position.Item2].haveObject = true;
+                    Tiles[coords][position.Item1 + position.Item2 * Side].haveObject = true;
                     break;
 				case BiomType.Desert:
                     Instantiate(desertObjects[rand.Next(0, desertObjects.Length)],
                         new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
                         (position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
                         Quaternion.identity).transform.SetParent(chunks[coords].transform, true);
-                    Tiles[coords][position.Item1, position.Item2].haveObject = true;
+                    Tiles[coords][position.Item1 + position.Item2 * Side].haveObject = true;
                     break;
 			}
 		}
@@ -331,9 +323,9 @@ public class Generator : MonoBehaviour
 				float x1 = x / (float)Side;
 				float y1 = y / (float)Side;
 
-				HeightData.Data[x - offsetX, y - offsetY] = ((float)HeightMap.Get(x1, y1) + 2f) / 4f;
-				HeatData.Data[x - offsetX, y - offsetY] = ((float)HeatMap.Get(x1, y1) + 2f) / 4f;
-				HumidData.Data[x - offsetX, y - offsetY] = ((float)HumidMap.Get(x1, y1) + 2f) / 4f;
+				HeightData[x - offsetX + (y - offsetY) * Side] = ((float)HeightMap.Get(x1, y1) + 2f) / 4f;
+				HeatData[x - offsetX + (y - offsetY) * Side] = ((float)HeatMap.Get(x1, y1) + 2f) / 4f;
+				HumidData[x - offsetX + (y - offsetY) * Side] = ((float)HumidMap.Get(x1, y1) + 2f) / 4f;
 			}
 		}	
 	}
@@ -341,17 +333,18 @@ public class Generator : MonoBehaviour
 	// Build a Tile array from our data
 	private void LoadTiles(int offsetX = 0, int offsetY = 0)
 	{
-		Tiles[(offsetX / Side, offsetY / Side)] = new MyTile[Side, Side];
+		Tiles[(offsetX / Side, offsetY / Side)] = new MyTile[Side * Side];
 		
 		for (var x = offsetX; x < Side + offsetX; x++)
 		{
 			for (var y = offsetY; y < Side + offsetY; y++)
 			{
                 MyTile t = new MyTile();
+				t.haveObject = false;
 				t.X = x;
 				t.Y = y;
 				
-				float height = HeightData.Data[x - offsetX, y - offsetY];
+				float height = HeightData[x - offsetX + (y - offsetY) * Side];
 				
 				t.HeightValue = height;
 				
@@ -364,7 +357,7 @@ public class Generator : MonoBehaviour
 				else
 					t.HeightType = HeightType.Snow;
 
-                float temp = HeatData.Data[x - offsetX, y - offsetY];
+                float temp = HeatData[x - offsetX + (y - offsetY) * Side];
 
                 if (t.HeightType == HeightType.Desert)
                     temp -= 0.05f * t.HeightValue;
@@ -383,16 +376,16 @@ public class Generator : MonoBehaviour
 					t.HeatType = HeatType.Hight;
 
 
-				float h = HumidData.Data[x - offsetX, y - offsetY];
+				float h = HumidData[x - offsetX + (y - offsetY) * Side];
 
                 if (h < 0.5)
 					t.HumidType = HumidType.Low;
 				else
 					t.HumidType = HumidType.Hight;
 
-				t.BiomType = biomTable[(int)t.HumidType - 1, (int)t.HeatType - 1];
+				t.BiomType = biomTable[((int)t.HumidType - 1) * 2 + (int)t.HeatType - 1];
 
-				Tiles[(offsetX / Side, offsetY / Side)][x - offsetX, y - offsetY] = t;
+				Tiles[(offsetX / Side, offsetY / Side)][x - offsetX + (y - offsetY) * Side] = t;
 			}
 		}
 	}

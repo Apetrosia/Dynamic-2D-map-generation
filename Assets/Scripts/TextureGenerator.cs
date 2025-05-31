@@ -10,31 +10,31 @@ public static class TextureGenerator {
     private static Color DesertColor = new Color(173 / 255f, 173 / 255f, 97 / 255f, 1);
 
 
-    public static Texture2D GetTexture(int width, int height, MyTile[,] tiles)
+    public static Texture2D GetTexture(int side, MyTile[] tiles)
 	{
-		var texture = new Texture2D(width, height);
-		var pixels = new Color[width * height];
+		var texture = new Texture2D(side, side);
+		var pixels = new Color[side * side];
 
-		for (var x = 0; x < width; x++)
+		for (var x = 0; x < side; x++)
 		{
-			for (var y = 0; y < height; y++)
+			for (var y = 0; y < side; y++)
 			{
-				switch (tiles[x,y].BiomType)
+				switch (tiles[x + y * side].BiomType)
 				{
 					case BiomType.Ice:
-						pixels[x + y * width] = IceColor;
+						pixels[x + y * side] = IceColor;
 						break;
 					case BiomType.Tundra:
-						pixels[x + y * width] = TundraColor;
+						pixels[x + y * side] = TundraColor;
 						break;
 					case BiomType.Forest:
-                        pixels[x + y * width] = ForestColor;
+                        pixels[x + y * side] = ForestColor;
                         break;
 					case BiomType.Field:
-						pixels[x + y * width] = FieldColor;
+						pixels[x + y * side] = FieldColor;
 						break;
 					case BiomType.Desert:
-						pixels[x + y * width] = DesertColor;
+						pixels[x + y * side] = DesertColor;
 						break;
                 }
 			}

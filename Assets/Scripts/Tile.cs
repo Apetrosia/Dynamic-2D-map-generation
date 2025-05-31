@@ -32,13 +32,13 @@ public enum BiomType
     Desert = 5
 }
 
-public class MyTile
+public struct MyTile
 {
 	public HeightType HeightType;
     public HeatType HeatType;
     public HumidType HumidType;
     public BiomType BiomType;
-    public bool haveObject = false;
+    public bool haveObject;
 
 	public float HeightValue { get; set; }
     public int X, Y;
