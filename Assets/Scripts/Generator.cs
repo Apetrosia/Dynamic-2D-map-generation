@@ -1,11 +1,12 @@
-﻿using UnityEngine;
-using AccidentalNoise;
-using System.Collections.Generic;
+﻿using AccidentalNoise;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Unity.Collections.LowLevel.Unsafe;
-using System.Linq;
 using Unity.VisualScripting;
+using UnityEngine;
+using UnityEngine.UIElements;
 
 public class Generator : MonoBehaviour
 {
@@ -66,10 +67,6 @@ public class Generator : MonoBehaviour
     [SerializeField]
     GameObject[] desertObjects;
 
-    private readonly object _tilesLock = new object();
-    private readonly object _mapsLock = new object();
-    private readonly object _texturesLock = new object();
-
     void Awake()
     {
         playerPosition = GameObject.FindWithTag("Player").transform;
@@ -105,6 +102,18 @@ public class Generator : MonoBehaviour
 
 	private async void CheckPlayerPosition()
 	{
+		for (int i = -3; i <= 3; i++)
+			for (int j = -3; j <= 3; j++)
+			{
+				if (Mathf.Abs(i) != 3 && Mathf.Abs(j) != 3)
+					continue;
+				if (chunks.Keys.Contains((currentChunk.Item1 + i, currentChunk.Item2 + j)))
+				{
+					Destroy(chunks[(currentChunk.Item1 + i, currentChunk.Item2 + j)].gameObject);
+					chunks.Remove((currentChunk.Item1 + i, currentChunk.Item2 + j));
+				}	
+			}
+
 		List<(int, int)> chunksToAdd = new List<(int, int)>();
 
         for (int i = -1; i <= 1; i++)
@@ -126,7 +135,6 @@ public class Generator : MonoBehaviour
 			MapRenderer[coords].materials[0].mainTexture =
 				TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
 			GenerateObjects(coords);
-			chunks[coords].isGenerated = true;
 		}
 
         canGenerate = true;
@@ -217,7 +225,8 @@ public class Generator : MonoBehaviour
 
     private void GenerateNewChunk((int, int) coords, bool parallel = false)
 	{
-		GetData(Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
+        chunks[coords].isGenerated = true;
+        GetData(Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
 		LoadTiles(Side * chunks[coords].offsetX, Side * chunks[coords].offsetY);
 		if (!parallel)
 				MapRenderer[coords].materials[0].mainTexture = TextureGenerator.GetTexture(Side, Side, Tiles[coords]);
@@ -256,47 +265,52 @@ public class Generator : MonoBehaviour
     {
         canGenerate = false;
 
-		for (int i = 0; i < Random.Range(7, 10); i++)
+		System.Random rand = new System.Random((int)((coords.Item1 + coords.Item2) *
+			(chunks[coords].transform.position.x + chunks[coords].transform.position.y) * seedHeight) % 100);
+
+		int count = rand.Next(5, 10);
+
+		for (int i = 0; i < count; i++)
 		{
-			(int, int) position = (Random.Range(0, Side), Random.Range(0, Side));
+			(int, int) position = (rand.Next(0, Side), rand.Next(0, Side));
 			if (Tiles[coords][position.Item1, position.Item2].haveObject)
 				continue;
 			switch (Tiles[coords][position.Item1, position.Item2].BiomType)
 			{
 				//new Vector3(position.Item1 * chunkSize, position.Item2 * chunkSize, 0),
 				case BiomType.Ice:
-					Instantiate(iceObjects[Random.Range(0, iceObjects.Length)],
+					Instantiate(iceObjects[rand.Next(0, iceObjects.Length)],
 						new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
 						(position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
-						Quaternion.identity);
-					Tiles[coords][position.Item1, position.Item2].haveObject = true;
+						Quaternion.identity).transform.SetParent(chunks[coords].transform, true);
+                    Tiles[coords][position.Item1, position.Item2].haveObject = true;
 					break;
 				case BiomType.Tundra:
-                    Instantiate(tundraObjects[Random.Range(0, tundraObjects.Length)],
+                    Instantiate(tundraObjects[rand.Next(0, tundraObjects.Length)],
                         new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
                         (position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
-                        Quaternion.identity);
+                        Quaternion.identity).transform.SetParent(chunks[coords].transform, true);
                     Tiles[coords][position.Item1, position.Item2].haveObject = true;
                     break;
 				case BiomType.Forest:
-                    Instantiate(forestObjects[Random.Range(0, forestObjects.Length)],
+                    Instantiate(forestObjects[rand.Next(0, forestObjects.Length)],
                         new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
                         (position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
-                        Quaternion.identity);
+                        Quaternion.identity).transform.SetParent(chunks[coords].transform, true);
                     Tiles[coords][position.Item1, position.Item2].haveObject = true;
                     break;
 				case BiomType.Field:
-                    Instantiate(fieldObjects[Random.Range(0, fieldObjects.Length)],
+                    Instantiate(fieldObjects[rand.Next(0, fieldObjects.Length)],
                         new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
                         (position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
-                        Quaternion.identity);
+                        Quaternion.identity).transform.SetParent(chunks[coords].transform, true);
                     Tiles[coords][position.Item1, position.Item2].haveObject = true;
                     break;
 				case BiomType.Desert:
-                    Instantiate(desertObjects[Random.Range(0, desertObjects.Length)],
+                    Instantiate(desertObjects[rand.Next(0, desertObjects.Length)],
                         new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
                         (position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
-                        Quaternion.identity);
+                        Quaternion.identity).transform.SetParent(chunks[coords].transform, true);
                     Tiles[coords][position.Item1, position.Item2].haveObject = true;
                     break;
 			}
