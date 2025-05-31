@@ -32,9 +32,9 @@ public class Generator : MonoBehaviour
     ImplicitFractal HeightMap;
     ImplicitFractal HeatMap;
     ImplicitFractal HumidMap;
-    NativeArray<float> HeightData;
-    NativeArray<float> HeatData;
-    NativeArray<float> HumidData;
+    float[] HeightData;
+    float[] HeatData;
+    float[] HumidData;
 
     Dictionary<(int, int), MyTile[]> Tiles;
 	BiomType[] biomTable;
@@ -67,9 +67,9 @@ public class Generator : MonoBehaviour
         playerPosition = GameObject.FindWithTag("Player").transform;
         MapRenderer = new Dictionary<(int, int), MeshRenderer>();
         biomTable = new BiomType[6] { BiomType.Ice, BiomType.Field, BiomType.Desert, BiomType.Tundra, BiomType.Forest, BiomType.Field};
-        HeightData = new NativeArray<float>(Side * Side, Allocator.Persistent);
-        HeatData = new NativeArray<float>(Side * Side, Allocator.Persistent);
-        HumidData = new NativeArray<float>(Side * Side, Allocator.Persistent);
+        HeightData = new float[Side * Side];
+        HeatData = new float[Side * Side];
+        HumidData = new float[Side * Side];
     }
 
     void Start()
