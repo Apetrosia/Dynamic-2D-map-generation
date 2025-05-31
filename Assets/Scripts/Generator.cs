@@ -331,23 +331,9 @@ public class Generator : MonoBehaviour
 				float x1 = x / (float)Side;
 				float y1 = y / (float)Side;
 
-				float value1 = (float)HeightMap.Get (x1, y1);
-                float value2 = (float)HeatMap.Get(x1, y1);
-                float value3 = (float)HumidMap.Get(x1, y1);
-
-                //keep track of the max and min values found
-                if (value1 > HeightData.Max) HeightData.Max = value1;
-				if (value1 < HeightData.Min) HeightData.Min = value1;
-
-                if (value2 > HeatData.Max) HeatData.Max = value2;
-                if (value2 < HeatData.Min) HeatData.Min = value2;
-
-                if (value3 > HumidData.Max) HumidData.Max = value3;
-                if (value3 < HumidData.Min) HumidData.Min = value3;
-
-				HeightData.Data[x - offsetX, y - offsetY] = value1;
-				HeatData.Data[x - offsetX, y - offsetY] = value2;
-				HumidData.Data[x - offsetX, y - offsetY] = value3;
+				HeightData.Data[x - offsetX, y - offsetY] = ((float)HeightMap.Get(x1, y1) + 2f) / 4f;
+				HeatData.Data[x - offsetX, y - offsetY] = ((float)HeatMap.Get(x1, y1) + 2f) / 4f;
+				HumidData.Data[x - offsetX, y - offsetY] = ((float)HumidMap.Get(x1, y1) + 2f) / 4f;
 			}
 		}	
 	}
@@ -366,7 +352,6 @@ public class Generator : MonoBehaviour
 				t.Y = y;
 				
 				float height = HeightData.Data[x - offsetX, y - offsetY];
-				height = (height - HeightData.Min) / (HeightData.Max - HeightData.Min);
 				
 				t.HeightValue = height;
 				
@@ -380,18 +365,17 @@ public class Generator : MonoBehaviour
 					t.HeightType = HeightType.Snow;
 
                 float temp = HeatData.Data[x - offsetX, y - offsetY];
-                temp = (temp - HeatData.Min) / (HeatData.Max - HeatData.Min);
 
                 if (t.HeightType == HeightType.Desert)
-                    temp -= 0.01f * t.HeightValue;
+                    temp -= 0.05f * t.HeightValue;
                 else if (t.HeightType == HeightType.Field)
-                    temp -= 0.02f * t.HeightValue;
+                    temp -= 0.08f * t.HeightValue;
                 else if (t.HeightType == HeightType.Forest)
-                    temp -= 0.03f * t.HeightValue;
+                    temp -= 0.1f * t.HeightValue;
                 else if (t.HeightType == HeightType.Snow)
-                    temp -= 0.04f * t.HeightValue;
+                    temp -= 0.2f * t.HeightValue;
 
-				if (temp < 0.1)
+				if (temp < 0.3)
 					t.HeatType = HeatType.Low;
 				else if (temp < 0.4)
 					t.HeatType = HeatType.Medium;
@@ -400,7 +384,6 @@ public class Generator : MonoBehaviour
 
 
 				float h = HumidData.Data[x - offsetX, y - offsetY];
-                h = (h - HumidData.Min) / (HumidData.Max - HumidData.Min);
 
                 if (h < 0.5)
 					t.HumidType = HumidType.Low;
