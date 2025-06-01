@@ -50,6 +50,8 @@ public class Generator : MonoBehaviour
 	//int currentOffsetX = 0;
     //int currentOffsetY = 0;
     Transform playerPosition;
+	int addBorder = 2;
+	int deleteBorder = 4;
 
 	[SerializeField]
 	GameObject[] iceObjects;
@@ -70,6 +72,7 @@ public class Generator : MonoBehaviour
         HeightData = new float[Side * Side];
         HeatData = new float[Side * Side];
         HumidData = new float[Side * Side];
+		TerrainOctaves = Mathf.Min(TerrainOctaves, 2);
     }
 
     void Start()
@@ -94,10 +97,10 @@ public class Generator : MonoBehaviour
 
 	private async void CheckPlayerPosition()
 	{
-		for (int i = -3; i <= 3; i++)
-			for (int j = -3; j <= 3; j++)
+		for (int i = -deleteBorder; i <= deleteBorder; i++)
+			for (int j = -deleteBorder; j <= deleteBorder; j++)
 			{
-				if (Mathf.Abs(i) != 3 && Mathf.Abs(j) != 3)
+				if (Mathf.Abs(i) != deleteBorder && Mathf.Abs(j) != deleteBorder)
 					continue;
 				if (chunks.Keys.Contains((currentChunk.Item1 + i, currentChunk.Item2 + j)))
 				{
@@ -108,8 +111,8 @@ public class Generator : MonoBehaviour
 
 		List<(int, int)> chunksToAdd = new List<(int, int)>();
 
-        for (int i = -1; i <= 1; i++)
-			for (int j = -1; j <= 1; j++)
+        for (int i = -addBorder; i <= addBorder; i++)
+			for (int j = -addBorder; j <= addBorder; j++)
 				if (CheckChunk((currentChunk.Item1 + i, currentChunk.Item2 + j)))
                     chunksToAdd.Add((currentChunk.Item1 + i, currentChunk.Item2 + j));
 
