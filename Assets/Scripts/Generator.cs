@@ -87,8 +87,8 @@ public class Generator : MonoBehaviour
 
 	private void Update()
 	{
-        currentChunk = ((int)(playerPosition.position.x + 7.5f) / 15 - (playerPosition.position.x < -7.5f ? 1 : 0),
-            (int)(playerPosition.position.y + 7.5f) / 15 - (playerPosition.position.y < -7.5f ? 1 : 0));
+        currentChunk = ((int)(playerPosition.position.x + 7.5f) / (int)chunkSize - (playerPosition.position.x < -7.5f ? 1 : 0),
+            (int)(playerPosition.position.y + 7.5f) / (int)chunkSize - (playerPosition.position.y < -7.5f ? 1 : 0));
 
         CheckPlayerPosition();
 		if (Input.GetKeyDown(KeyCode.Space) && canGenerate)
@@ -275,36 +275,36 @@ public class Generator : MonoBehaviour
 				//new Vector3(position.Item1 * chunkSize, position.Item2 * chunkSize, 0),
 				case BiomType.Ice:
 					Instantiate(iceObjects[rand.Next(0, iceObjects.Length)],
-						new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
-						(position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
+						new Vector3((position.Item1 + chunks[coords].offsetX * Side) * chunkSize / Side - 7.5f,
+						(position.Item2 + chunks[coords].offsetY * Side) * chunkSize / Side - 7.5f, 0),
 						Quaternion.identity).transform.SetParent(chunks[coords].transform, true);
                     Tiles[coords][position.Item1 + position.Item2 * Side].haveObject = true;
 					break;
 				case BiomType.Tundra:
                     Instantiate(tundraObjects[rand.Next(0, tundraObjects.Length)],
-                        new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
-                        (position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
+                        new Vector3((position.Item1 + chunks[coords].offsetX * Side) * chunkSize / Side - 7.5f,
+                        (position.Item2 + chunks[coords].offsetY * Side) * chunkSize / Side - 7.5f, 0),
                         Quaternion.identity).transform.SetParent(chunks[coords].transform, true);
                     Tiles[coords][position.Item1 + position.Item2 * Side].haveObject = true;
                     break;
 				case BiomType.Forest:
                     Instantiate(forestObjects[rand.Next(0, forestObjects.Length)],
-                        new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
-                        (position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
+                        new Vector3((position.Item1 + chunks[coords].offsetX * Side) * chunkSize / Side - 7.5f,
+                        (position.Item2 + chunks[coords].offsetY * Side) * chunkSize / Side - 7.5f, 0),
                         Quaternion.identity).transform.SetParent(chunks[coords].transform, true);
                     Tiles[coords][position.Item1 + position.Item2 * Side].haveObject = true;
                     break;
 				case BiomType.Field:
                     Instantiate(fieldObjects[rand.Next(0, fieldObjects.Length)],
-                        new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
-                        (position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
+                        new Vector3((position.Item1 + chunks[coords].offsetX * Side) * chunkSize / Side - 7.5f,
+                        (position.Item2 + chunks[coords].offsetY * Side) * chunkSize / Side - 7.5f, 0),
                         Quaternion.identity).transform.SetParent(chunks[coords].transform, true);
                     Tiles[coords][position.Item1 + position.Item2 * Side].haveObject = true;
                     break;
 				case BiomType.Desert:
                     Instantiate(desertObjects[rand.Next(0, desertObjects.Length)],
-                        new Vector3((position.Item1 + chunks[coords].offsetX * Side) * 15 / 256 - 7.5f,
-                        (position.Item2 + chunks[coords].offsetY * Side) * 15 / 256 - 7.5f, 0),
+                        new Vector3((position.Item1 + chunks[coords].offsetX * Side) * chunkSize / Side - 7.5f,
+                        (position.Item2 + chunks[coords].offsetY * Side) * chunkSize / Side - 7.5f, 0),
                         Quaternion.identity).transform.SetParent(chunks[coords].transform, true);
                     Tiles[coords][position.Item1 + position.Item2 * Side].haveObject = true;
                     break;
