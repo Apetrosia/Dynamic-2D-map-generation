@@ -2060,8 +2060,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Side: 256
-  TerrainOctaves: 2
-  TerrainFrequency: 0.6
+  TerrainOctaves: 3
+  TerrainFrequency: 0.3
   borders:
   - 0.2
   - 0.4

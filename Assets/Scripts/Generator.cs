@@ -72,7 +72,7 @@ public class Generator : MonoBehaviour
         HeightData = new float[Side * Side];
         HeatData = new float[Side * Side];
         HumidData = new float[Side * Side];
-		TerrainOctaves = Mathf.Min(TerrainOctaves, 2);
+		TerrainOctaves = Mathf.Max(TerrainOctaves, 2);
     }
 
     void Start()
@@ -363,13 +363,13 @@ public class Generator : MonoBehaviour
                 float temp = HeatData[x - offsetX + (y - offsetY) * Side];
 
                 if (t.HeightType == HeightType.Desert)
-                    temp -= 0.05f * t.HeightValue;
+                    temp -= 0.01f * t.HeightValue;
                 else if (t.HeightType == HeightType.Field)
-                    temp -= 0.08f * t.HeightValue;
+                    temp -= 0.02f * t.HeightValue;
                 else if (t.HeightType == HeightType.Forest)
-                    temp -= 0.1f * t.HeightValue;
+                    temp -= 0.03f * t.HeightValue;
                 else if (t.HeightType == HeightType.Snow)
-                    temp -= 0.2f * t.HeightValue;
+                    temp -= 0.04f * t.HeightValue;
 
 				if (temp < 0.3)
 					t.HeatType = HeatType.Low;
@@ -381,7 +381,7 @@ public class Generator : MonoBehaviour
 
 				float h = HumidData[x - offsetX + (y - offsetY) * Side];
 
-                if (h < 0.5)
+                if (h < 0.5f)
 					t.HumidType = HumidType.Low;
 				else
 					t.HumidType = HumidType.Hight;
