@@ -386,7 +386,7 @@ public class Generator : MonoBehaviour
 				else
 					t.HumidType = HumidType.Hight;
 
-				t.BiomType = biomTable[((int)t.HumidType - 1) * 2 + (int)t.HeatType - 1];
+				t.BiomType = biomTable[((int)t.HumidType - 1) * 3 + (int)t.HeatType - 1];
 
 				Tiles[(offsetX / Side, offsetY / Side)][x - offsetX + (y - offsetY) * Side] = t;
 			}
