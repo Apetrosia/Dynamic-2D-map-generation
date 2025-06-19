@@ -2068,6 +2068,11 @@ MonoBehaviour:
   - 0.6
   chunkPrefab: {fileID: 5198791829087745450, guid: 8cc3a498422194e4f816dd566c88109e,
     type: 3}
+  IceColor: {r: 0.8901961, g: 1, b: 0.9882353, a: 1}
+  TundraColor: {r: 0.09019608, g: 0.14901961, b: 0.12156863, a: 1}
+  ForestColor: {r: 0.078431375, g: 0.32156864, b: 0.043137256, a: 1}
+  FieldColor: {r: 0.3529412, g: 0.7019608, b: 0.105882354, a: 1}
+  DesertColor: {r: 0.6784314, g: 0.6784314, b: 0.38039216, a: 1}
   iceObjects:
   - {fileID: 7947911505737750455, guid: 41ea6afb203377e42995d7d016ea5907, type: 3}
   - {fileID: 7947911505737750455, guid: cfa0a5ef94fb05d4f97d095a05dc55c5, type: 3}
@@ -2090,8 +2095,8 @@ MonoBehaviour:
   - {fileID: 8193410510875309158, guid: c6d86ec8825b7674a9736d1cb0cd98a2, type: 3}
   - {fileID: 4527656619116180701, guid: 403080d7568a4f949b4bfc7128477a8c, type: 3}
   - {fileID: 3067587326924003671, guid: a0a66c9b152e801409fc26c4ca493d18, type: 3}
-  - {fileID: 6814613003899766793, guid: 3dfaf574e8a784e4a8332d20a484ff46, type: 3}
-  - {fileID: 3043591372031549919, guid: 1a8888b6c15ff1e4985701f527cb6763, type: 3}
+  - {fileID: 2055102311959635369, guid: b823debd04fd63f4d8e579210fe0ff20, type: 3}
+  - {fileID: 2055102311959635369, guid: 5c635e5bc09c93043a53ee0e17e89d0f, type: 3}
   desertObjects:
   - {fileID: 7947911505737750455, guid: d730038d263986f4dac93230e1dd62b0, type: 3}
   - {fileID: 5055698509961064897, guid: 6d6991dbbdeecb1488bbf78c063d1235, type: 3}

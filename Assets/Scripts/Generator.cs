@@ -53,7 +53,18 @@ public class Generator : MonoBehaviour
 	int addBorder = 2;
 	int deleteBorder = 4;
 
-	[SerializeField]
+    [SerializeField]
+    private Color IceColor = new Color(227 / 255f, 255 / 255f, 252 / 255f, 1);
+    [SerializeField]
+    private Color TundraColor = new Color(23 / 255f, 38 / 255f, 31 / 255f, 1);
+    [SerializeField]
+    private Color ForestColor = new Color(20 / 255f, 82 / 255f, 11 / 255f, 1);
+    [SerializeField]
+    private Color FieldColor = new Color(90 / 255f, 179 / 255f, 27 / 255f, 1);
+    [SerializeField]
+    private Color DesertColor = new Color(173 / 255f, 173 / 255f, 97 / 255f, 1);
+
+    [SerializeField]
 	GameObject[] iceObjects;
     [SerializeField]
     GameObject[] tundraObjects;

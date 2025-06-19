@@ -18,6 +18,9 @@ namespace Cainos.PixelArtTopDown_Basic
 
         private void Update()
         {
+            if (Input.GetKeyDown(KeyCode.Escape))
+                Application.Quit();
+
             Vector2 dir = Vector2.zero;
             if (Input.GetKey(KeyCode.A))
             {
